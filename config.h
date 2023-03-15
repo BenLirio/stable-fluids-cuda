@@ -1,0 +1,10 @@
+#ifndef STABLE_FLUIDS_CUDA_CONFIG_H
+#define STABLE_FLUIDS_CUDA_CONFIG_H
+
+#define WIDTH 32
+#define HEIGHT 16
+
+#define N (WIDTH * HEIGHT)
+
+
+#endif
