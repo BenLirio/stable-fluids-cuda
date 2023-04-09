@@ -17,3 +17,4 @@ float *previous_colors = _cs0;
 float *colors = _cs;
 float *preasure = _preasure;
 float *divergence = _divergence;
+int current_step = 0;

@@ -11,5 +11,6 @@ extern float *previous_colors;
 extern float *colors;
 extern float *preasure;
 extern float *divergence;
+extern int current_step;
 
 #endif // STABLE_FLUIDS_CUDA_STATE_H

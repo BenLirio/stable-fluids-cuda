@@ -107,7 +107,6 @@ void advect(float *previous_values, float *values, float *x_velocities, float *y
 }
 
 void project(float *x_velocities, float *y_velocities, float *preasure, float *divergence) {
-  fprintf(stderr, "project\n");
   float h = 1.0f / sqrt(N);
   for (int y = 1; y <= HEIGHT; y++) {
     for (int x = 1; x <= WIDTH; x++) {
@@ -144,23 +143,71 @@ void project(float *x_velocities, float *y_velocities, float *preasure, float *d
   }
 }
 
+void source_colors() {
+  for (int y = 1; y <= HEIGHT; y++) {
+    for (int x = 1; x <= WIDTH; x++) {
+      idx2 idx = idx2(x, y);
+      if (x > WIDTH/2 - WIDTH*0.1 && x < WIDTH/2 + WIDTH*0.1 && y > HEIGHT/2 - HEIGHT*0.1 && y < HEIGHT/2 + HEIGHT*0.1) {
+        colors[IDX2(idx)] += 0.01;
+      }
+    }
+  }
+}
+void sink_colors() {
+  for (int y = 1; y <= HEIGHT; y++) {
+    for (int x = 1; x <= WIDTH; x++) {
+      idx2 idx = idx2(x, y);
+      colors[IDX2(idx)] *= (1-TIME_STEP) + (1-COLOR_SINK_RATE)*TIME_STEP;
+      previous_colors[IDX2(idx)] *= (1-TIME_STEP) + (1-COLOR_SINK_RATE)*TIME_STEP;
+    }
+  }
+}
+void source_velocity() {
+  for (int y = 1; y <= HEIGHT; y++) {
+    for (int x = 1; x <= WIDTH; x++) {
+      idx2 idx = idx2(x, y);
+      y_velocities[IDX2(idx)] += 0.1*fabs(sin(x*0.1 + y*0.1 + current_step/(float)NUM_STEPS));
+      previous_y_velocities[IDX2(idx)] += 0.1*fabs(sin(x*0.1 + y*0.1 + current_step/(float)NUM_STEPS));
+      x_velocities[IDX2(idx)] += 0.1*fabs(cos(x*0.1 + y*0.1 + current_step/(float)NUM_STEPS));
+      previous_x_velocities[IDX2(idx)] += 0.1*fabs(cos(x*0.1 + y*0.1 + current_step/(float)NUM_STEPS));
+
+    }
+  }
+}
+void sink_velocity() {
+  for (int y = 1; y <= HEIGHT; y++) {
+    for (int x = 1; x <= WIDTH; x++) {
+      idx2 idx = idx2(x, y);
+      x_velocities[IDX2(idx)] *= (1-TIME_STEP) + (1-VELOCITY_SINK_RATE)*TIME_STEP;
+      previous_x_velocities[IDX2(idx)] *= (1-TIME_STEP) + (1-VELOCITY_SINK_RATE)*TIME_STEP;
+      y_velocities[IDX2(idx)] *= (1-TIME_STEP) + (1-VELOCITY_SINK_RATE)*TIME_STEP;
+      previous_y_velocities[IDX2(idx)] *= (1-TIME_STEP) + (1-VELOCITY_SINK_RATE)*TIME_STEP;
+    }
+  }
+}
+
 void step() {
   // density
+  source_colors();
+  sink_colors();
   SWAP(previous_colors, colors);
   diffuse(previous_colors, colors, DIFFUSION_RATE);
   SWAP(previous_colors, colors);
   advect(previous_colors, colors, x_velocities, y_velocities);
 
   // velocity
+  source_velocity();
+  sink_velocity();
   SWAP(previous_x_velocities, x_velocities);
   diffuse(previous_x_velocities, x_velocities, VISCOSITY);
   SWAP(previous_y_velocities, y_velocities);
   diffuse(previous_y_velocities, y_velocities, VISCOSITY);
-  project(previous_x_velocities, previous_y_velocities, x_velocities, y_velocities);
+  project(x_velocities, y_velocities, preasure, divergence);
 
-  // SWAP(previous_x_velocities, x_velocities);
-  // SWAP(previous_y_velocities, y_velocities);
-  // advect(previous_x_velocities, x_velocities, previous_x_velocities, previous_y_velocities);
-  // advect(previous_y_velocities, y_velocities, previous_x_velocities, previous_y_velocities);
-  // project(previous_x_velocities, previous_y_velocities, x_velocities, y_velocities);
+  SWAP(previous_x_velocities, x_velocities);
+  SWAP(previous_y_velocities, y_velocities);
+  advect(previous_x_velocities, x_velocities, previous_x_velocities, previous_y_velocities);
+  advect(previous_y_velocities, y_velocities, previous_x_velocities, previous_y_velocities);
+  project(previous_x_velocities, previous_y_velocities, preasure, divergence);
+  current_step++;
 }

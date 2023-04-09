@@ -29,7 +29,8 @@
 #define TIME_STEP 0.01f
 #endif
 
-
+#define COLOR_SINK_RATE 0.1f
+#define VELOCITY_SINK_RATE 0.1f
 
 #define NUM_NEIGHBORS 4
 #define IDX2(idx2) ((idx2.y-1) * WIDTH + (idx2.x-1))

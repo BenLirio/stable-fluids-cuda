@@ -5,48 +5,25 @@ from random import choice
 import sys
 from tempfile import TemporaryDirectory
 from pathlib import Path
+import numpy as np
+import argparse
 
 VIZ_PATH = '/usr/bin/viz'
+ANIMATION_DURATION_SECONDS = 6
 
+NUM_VARIATIONS = 8
+NUM_SAMPLES = 100
+positive_int_normal = lambda mean, std: np.abs(np.random.normal(mean, std, NUM_SAMPLES).astype(int))
+positive_float_normal = lambda mean, std: np.round(np.abs(np.random.normal(mean, std, NUM_SAMPLES)), 4)
 
-NUM_STEPS_VARIATIONS = [ 89, 1, 7, 10, 30 ]
-WIDTH_VARIATIONS = [ 32, 3, 7, 19, 31, 72 ]
+NUM_STEPS_VARIATIONS = positive_int_normal(30, 10)
+WIDTH_VARIATIONS = positive_int_normal(100, 30)
 HEIGHT_VARIATIONS = WIDTH_VARIATIONS
-DIFFUSION_RATE_VARIATIONS = [ 0.01, 0.005, 0.05, 0.1 ]
-VISCOSITY_VARIATIONS = [ 0.005, 0.01, 0.05, 0.1 ]
-GAUSS_SEIDEL_ITERATIONS_VARIATIONS = [ 20, 3, 10, 30, 40, 50, 100 ]
-TIME_STEP_VARIATIONS = [ 0.01, 0.1, 1.0, 2, 0.0001 ]
+DIFFUSION_RATE_VARIATIONS = positive_float_normal(0.001, 0.001)
+VISCOSITY_VARIATIONS = positive_float_normal(0.05, 0.01)
+GAUSS_SEIDEL_ITERATIONS_VARIATIONS = positive_int_normal(20, 20)
+TIME_STEP_VARIATIONS = positive_float_normal(0.01, 0.001)
 
-def default_config():
-  return {
-      "NUM_STEPS": NUM_STEPS_VARIATIONS[0],
-      "WIDTH": WIDTH_VARIATIONS[0],
-      "HEIGHT": HEIGHT_VARIATIONS[0],
-      "DIFFUSION_RATE": DIFFUSION_RATE_VARIATIONS[0],
-      "VISCOSITY": VISCOSITY_VARIATIONS[0],
-      "GAUSS_SEIDEL_ITERATIONS": GAUSS_SEIDEL_ITERATIONS_VARIATIONS[0],
-      "TIME_STEP": TIME_STEP_VARIATIONS[0],
-  }
-def random_config(use_default):
-  width = choice(WIDTH_VARIATIONS)
-  height = choice(HEIGHT_VARIATIONS)
-  diffusion_rate = choice(DIFFUSION_RATE_VARIATIONS)
-  time_step = choice(TIME_STEP_VARIATIONS)
-  num_steps = choice(NUM_STEPS_VARIATIONS)
-  # overrides
-  height = width
-  diffusion_rate = 0.001
-  time_step = 0.01
-  num_steps = 2
-  return {
-      "NUM_STEPS": num_steps,
-      "WIDTH": width,
-      "HEIGHT": height,
-      "DIFFUSION_RATE": diffusion_rate,
-      "VISCOSITY": choice(VISCOSITY_VARIATIONS),
-      "GAUSS_SEIDEL_ITERATIONS": choice(GAUSS_SEIDEL_ITERATIONS_VARIATIONS),
-      "TIME_STEP": time_step,
-  }
 def config_to_string(config):
   return '_'.join([
     f'steps={config["NUM_STEPS"]}',
@@ -93,21 +70,40 @@ def generate_gif(config):
         '--input-format=csv',
         '--output-format=gif',
         '--encoding=scalar',
-        f'--duration={int(3000/config["NUM_STEPS"])}',
+        f'--duration={int(ANIMATION_DURATION_SECONDS*1000/config["NUM_STEPS"])}',
       ], stdin=stable_fluids_process.stdout, stdout=gif_file)
       stable_fluids_process.stdout.close()
       viz_process.communicate()
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--vary-on', type=str, default='None')
+parser.add_argument('--num-steps', type=int, default=choice(NUM_STEPS_VARIATIONS))
+parser.add_argument('--width', type=int, default=choice(WIDTH_VARIATIONS))
+parser.add_argument('--height', type=int, default=choice(HEIGHT_VARIATIONS))
+parser.add_argument('--diffusion-rate', type=float, default=choice(DIFFUSION_RATE_VARIATIONS))
+parser.add_argument('--viscosity', type=float, default=choice(VISCOSITY_VARIATIONS))
+parser.add_argument('--gauss-seidel-iterations', type=int, default=choice(GAUSS_SEIDEL_ITERATIONS_VARIATIONS))
+parser.add_argument('--time-step', type=float, default=choice(TIME_STEP_VARIATIONS))
 
 
 if __name__ == '__main__':
-  for path in glob.glob('gifs/*'):
-    print(path)
+  for path in glob.glob('gifs/*.gif'):
     os.remove(path)
-  if len(sys.argv) != 2:
-    print('Usage: python test.py <num-gifs-to-generate>')
-    exit(1)
-  generate_gif(default_config())
-  for i in range(int(sys.argv[1])-1):
-    generate_gif(random_config())
+
+  args = parser.parse_args()
+  config = {
+    "NUM_STEPS": args.num_steps,
+    "WIDTH": args.width,
+    "HEIGHT": args.height,
+    "DIFFUSION_RATE": args.diffusion_rate,
+    "VISCOSITY": args.viscosity,
+    "GAUSS_SEIDEL_ITERATIONS": args.gauss_seidel_iterations,
+    "TIME_STEP": args.time_step,
+  }
+  if args.vary_on == 'None':
+    generate_gif(config)
+    exit(0)
+  for i in range(NUM_VARIATIONS):
+    config[args.vary_on] = choice(locals()[f'{args.vary_on}_VARIATIONS'])
+    generate_gif(config)
