@@ -33,9 +33,11 @@
 
 #define NUM_NEIGHBORS 4
 #define IDX2(idx2) ((idx2.y-1) * WIDTH + (idx2.x-1))
+#define IDX2_0_OFFSET(idx2) (((idx2.y) * (WIDTH)) + (idx2.x))
 #define SWAP(x0, x) {float *tmp = x0; x0 = x; x = tmp;}
-
 #define N (WIDTH * HEIGHT)
+#define ASSERTIONS_ENABLED 1
+#define VERBOSE_ASSERTIONS 1
 
 
 #endif // STABLE_FLUIDS_CUDA_CONFIG_H

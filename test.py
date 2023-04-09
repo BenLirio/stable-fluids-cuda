@@ -1,6 +1,6 @@
 import glob
 import os
-from subprocess import run, Popen, PIPE
+from subprocess import run, Popen, PIPE, STDOUT, DEVNULL
 from random import choice
 import sys
 from tempfile import TemporaryDirectory
@@ -10,11 +10,11 @@ VIZ_PATH = '/usr/bin/viz'
 
 
 NUM_STEPS_VARIATIONS = [ 89, 1, 7, 30 ]
-WIDTH_VARIATIONS = [ 32, 3, 7, 19, 31 ]
+WIDTH_VARIATIONS = [ 32, 3, 7, 19, 31, 72 ]
 HEIGHT_VARIATIONS = WIDTH_VARIATIONS
 DIFFUSION_RATE_VARIATIONS = [ 0.01, 0.005, 0.05, 0.1 ]
 VISCOSITY_VARIATIONS = [ 0.005, 0.01, 0.05, 0.1 ]
-GAUSS_SEIDEL_ITERATIONS_VARIATIONS = [ 20, 3, 10, 30 ]
+GAUSS_SEIDEL_ITERATIONS_VARIATIONS = [ 20, 3, 10, 30, 40, 50, 100 ]
 TIME_STEP_VARIATIONS = [ 0.01, 0.1, 1.0, 2, 0.0001 ]
 
 def default_config():
@@ -28,14 +28,24 @@ def default_config():
       "TIME_STEP": TIME_STEP_VARIATIONS[0],
   }
 def random_config():
+  width = choice(WIDTH_VARIATIONS)
+  height = choice(HEIGHT_VARIATIONS)
+  diffusion_rate = choice(DIFFUSION_RATE_VARIATIONS)
+  time_step = choice(TIME_STEP_VARIATIONS)
+  num_steps = choice(NUM_STEPS_VARIATIONS)
+  # overrides
+  height = width
+  diffusion_rate = 0.001
+  time_step = 0.01
+  num_steps = 5
   return {
-      "NUM_STEPS": choice(NUM_STEPS_VARIATIONS),
-      "WIDTH": choice(WIDTH_VARIATIONS),
-      "HEIGHT": choice(HEIGHT_VARIATIONS),
-      "DIFFUSION_RATE": choice(DIFFUSION_RATE_VARIATIONS),
+      "NUM_STEPS": num_steps,
+      "WIDTH": width,
+      "HEIGHT": height,
+      "DIFFUSION_RATE": diffusion_rate,
       "VISCOSITY": choice(VISCOSITY_VARIATIONS),
       "GAUSS_SEIDEL_ITERATIONS": choice(GAUSS_SEIDEL_ITERATIONS_VARIATIONS),
-      "TIME_STEP": choice(TIME_STEP_VARIATIONS),
+      "TIME_STEP": time_step,
   }
 def config_to_string(config):
   return '_'.join([
@@ -71,7 +81,7 @@ def generate_gif(config):
     ])
     stable_fluids_process = Popen([
       f'{build_dir}/stable-fluids-cuda',
-    ], stdout=PIPE)
+    ], stdout=PIPE, stderr=sys.stderr)
     Path('gifs').mkdir(parents=True, exist_ok=True)
     with open(f'gifs/{config_to_string(config)}.gif', 'w') as gif_file:
       viz_process = Popen([
@@ -83,7 +93,7 @@ def generate_gif(config):
         '--input-format=csv',
         '--output-format=gif',
         '--encoding=scalar',
-        '--frame-rate=1',
+        f'--duration={int(3000/config["NUM_STEPS"])}',
       ], stdin=stable_fluids_process.stdout, stdout=gif_file)
       stable_fluids_process.stdout.close()
       viz_process.communicate()

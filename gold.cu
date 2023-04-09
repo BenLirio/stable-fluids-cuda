@@ -2,6 +2,10 @@
 #include "config.h"
 #include "vec2.h"
 #include "state.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <assert.h>
+#include <math.h>
 
 idx2 adjancent_offsets[NUM_NEIGHBORS] = {
     idx2(0, 1),
@@ -18,6 +22,14 @@ idx2 lower_right_square_offsets[NUM_NEIGHBORS] = {
 
 
 void diffuse(float *previous_values, float *values, float rate) {
+  int *counts;
+  if (ASSERTIONS_ENABLED) {
+    counts = (int*)malloc(WIDTH*HEIGHT*sizeof(int));
+    for (int i = 0; i < WIDTH*HEIGHT; i++) {
+      counts[i] = 0;
+    }
+  }
+
   float factor = TIME_STEP*rate*WIDTH*HEIGHT;
   for (int k = 0; k < GAUSS_SEIDEL_ITERATIONS; k++) {
     for (int y = 1; y <= HEIGHT; y++) {
@@ -25,35 +37,56 @@ void diffuse(float *previous_values, float *values, float rate) {
         idx2 idx = idx2(x, y);
         float sum = 0;
         for (int i = 0; i < NUM_NEIGHBORS; i++) {
-          sum += values[IDX2(
-            wrap_idx2(idx2(
+          idx2 neighbor_idx = wrap_idx2(idx2(
               idx.x + adjancent_offsets[i].x,
               idx.y + adjancent_offsets[i].y
-            )))];
+            ));
+          sum += values[IDX2(neighbor_idx)];
+          if (ASSERTIONS_ENABLED) counts[IDX2(neighbor_idx)]++;
         }
         values[IDX2(idx)] = (previous_values[IDX2(idx)] + factor*sum) / (1 + 4*factor);
       }
     }
   }
+  if (ASSERTIONS_ENABLED) {
+    for (int i = 0; i < WIDTH*HEIGHT; i++) {
+      assert(counts[i] == 4*GAUSS_SEIDEL_ITERATIONS);
+    }
+    free(counts);
+  }
 }
 
 void advect(float *previous_values, float *values, float *x_velocities, float *y_velocities) {
-  float alpha = (TIME_STEP*WIDTH*HEIGHT)/(2.0f*(WIDTH+HEIGHT));
+  float alpha = TIME_STEP*sqrt(N);
   for (int y = 1; y <= HEIGHT; y++) {
     for (int x = 1; x <= WIDTH; x++) {
       idx2 idx = idx2(x, y);
-      vec2 pos_offset_by_velocity = vec2(
-        x - alpha*x_velocities[IDX2(idx2(x, y))],
-        y - alpha*y_velocities[IDX2(idx2(x, y))]
-      );
-      idx2 idx_offset_by_velocity = idx2(
+      vec2 pos_offset_by_velocity = wrap_vec2(vec2(
+        x - alpha*x_velocities[IDX2(idx)],
+        y - alpha*y_velocities[IDX2(idx)]
+      ));
+      idx2 idx_offset_by_velocity = wrap_idx2(idx2(
         (int)floor(pos_offset_by_velocity.x),
         (int)floor(pos_offset_by_velocity.y)
-      );
-      float wx0 = idx_offset_by_velocity.x - pos_offset_by_velocity.x;
+      ));
+      float wx0 = min(min(
+        abs(pos_offset_by_velocity.x - idx_offset_by_velocity.x),
+        abs(pos_offset_by_velocity.x - (idx_offset_by_velocity.x + WIDTH))
+      ), abs(pos_offset_by_velocity.x - (idx_offset_by_velocity.x - WIDTH)));
+      if (ASSERTIONS_ENABLED && VERBOSE_ASSERTIONS && (wx0 < 0.0f || wx0 > 1.0f)) {
+        fprintf(stderr, "advect: y=%d; x=%d; pos=%f; idx=%d; wx0=%f;\n", y, x, pos_offset_by_velocity.x, idx_offset_by_velocity.x, wx0);
+      }
+      if (ASSERTIONS_ENABLED) assert(wx0 >= 0.0f && wx0 <= 1.0f);
       float wx1 = 1 - wx0;
-      float wy0 = idx_offset_by_velocity.y - pos_offset_by_velocity.y;
+      if (ASSERTIONS_ENABLED) assert(wx1 >= 0.0f && wx1 <= 1.0f);
+      //float wy0 = pos_offset_by_velocity.y - idx_offset_by_velocity.y;
+      float wy0 = min(min(
+        abs(pos_offset_by_velocity.y - idx_offset_by_velocity.y),
+        abs(pos_offset_by_velocity.y - (idx_offset_by_velocity.y + HEIGHT))
+      ), abs(pos_offset_by_velocity.y - (idx_offset_by_velocity.y - HEIGHT)));
+      if (ASSERTIONS_ENABLED) assert(wy0 >= 0.0f && wy0 <= 1.0f);
       float wy1 = 1 - wy0;
+      if (ASSERTIONS_ENABLED) assert(wy1 >= 0.0f && wy1 <= 1.0f);
       float weights[NUM_NEIGHBORS] = {
         wx1*wy1,
         wx0*wy1,
@@ -74,7 +107,7 @@ void advect(float *previous_values, float *values, float *x_velocities, float *y
 }
 
 void project(float *x_velocities, float *y_velocities, float *previous_x_velocities, float *previous_y_velocities) {
-  float h = 1.0f / N;
+  float h = 1.0f / sqrt(N);
   for (int y = 1; y <= HEIGHT; y++) {
     for (int x = 1; x <= WIDTH; x++) {
       idx2 idx = idx2(x, y);
@@ -119,15 +152,15 @@ void step() {
   advect(previous_colors, colors, x_velocities, y_velocities);
 
   // velocity
-  SWAP(previous_x_velocities, x_velocities);
-  diffuse(previous_x_velocities, x_velocities, VISCOSITY);
-  SWAP(previous_y_velocities, y_velocities);
-  diffuse(previous_y_velocities, y_velocities, VISCOSITY);
-  project(previous_x_velocities, previous_y_velocities, x_velocities, y_velocities);
+  // SWAP(previous_x_velocities, x_velocities);
+  // diffuse(previous_x_velocities, x_velocities, VISCOSITY);
+  // SWAP(previous_y_velocities, y_velocities);
+  // diffuse(previous_y_velocities, y_velocities, VISCOSITY);
+  // project(previous_x_velocities, previous_y_velocities, x_velocities, y_velocities);
 
-  SWAP(previous_x_velocities, x_velocities);
-  SWAP(previous_y_velocities, y_velocities);
-  advect(previous_x_velocities, x_velocities, previous_x_velocities, previous_y_velocities);
-  advect(previous_y_velocities, y_velocities, previous_x_velocities, previous_y_velocities);
-  project(previous_x_velocities, previous_y_velocities, x_velocities, y_velocities);
+  // SWAP(previous_x_velocities, x_velocities);
+  // SWAP(previous_y_velocities, y_velocities);
+  // advect(previous_x_velocities, x_velocities, previous_x_velocities, previous_y_velocities);
+  // advect(previous_y_velocities, y_velocities, previous_x_velocities, previous_y_velocities);
+  // project(previous_x_velocities, previous_y_velocities, x_velocities, y_velocities);
 }
