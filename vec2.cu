@@ -10,7 +10,11 @@
 
 idx2 wrap_idx2(idx2 u) {
   return idx2(
-    ((u.x%WIDTH)+WIDTH) % WIDTH,
-    ((u.y%HEIGHT)+HEIGHT) % HEIGHT
+    ((((u.x-1)%WIDTH)+WIDTH) % WIDTH)+1,
+    ((((u.y-1)%HEIGHT)+HEIGHT) % HEIGHT)+1
   );
+}
+
+idx2 idx2_add(idx2 u, idx2 v) {
+  return idx2(u.x+v.x, u.y+v.y);
 }

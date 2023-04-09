@@ -1,16 +1,38 @@
 #ifndef STABLE_FLUIDS_CUDA_CONFIG_H
 #define STABLE_FLUIDS_CUDA_CONFIG_H
 
-#define NUM_STEPS 100
+#ifndef NUM_STEPS
+#define NUM_STEPS 120
+#endif
+
+#ifndef WIDTH
 #define WIDTH 64
+#endif
+
+#ifndef HEIGHT
 #define HEIGHT 64
-#define NUM_NEIGHBORS 4
+#endif
+
+#ifndef DIFFUSION_RATE
 #define DIFFUSION_RATE 0.01f
-#define TIME_STEP 0.01f
+#endif
+
+#ifndef VISCOSITY
+#define VISCOSITY 0.0001f
+#endif
+
+#ifndef GAUSS_SEIDEL_ITERATIONS
 #define GAUSS_SEIDEL_ITERATIONS 20
-#define IDX(y, x) ((y) * WIDTH + (x))
-#define DIDX(dim) ((dim.y) * WIDTH + (dim.x))
-#define IDX2(idx2) ((idx2.y) * WIDTH + (idx2.x))
+#endif
+
+#ifndef TIME_STEP
+#define TIME_STEP 0.01f
+#endif
+
+
+
+#define NUM_NEIGHBORS 4
+#define IDX2(idx2) ((idx2.y-1) * WIDTH + (idx2.x-1))
 #define SWAP(x0, x) {float *tmp = x0; x0 = x; x = tmp;}
 
 #define N (WIDTH * HEIGHT)
