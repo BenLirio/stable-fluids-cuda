@@ -106,15 +106,16 @@ void advect(float *previous_values, float *values, float *x_velocities, float *y
   }
 }
 
-void project(float *x_velocities, float *y_velocities, float *previous_x_velocities, float *previous_y_velocities) {
+void project(float *x_velocities, float *y_velocities, float *preasure, float *divergence) {
+  fprintf(stderr, "project\n");
   float h = 1.0f / sqrt(N);
   for (int y = 1; y <= HEIGHT; y++) {
     for (int x = 1; x <= WIDTH; x++) {
       idx2 idx = idx2(x, y);
-      float delta_vx = x_velocities[IDX2(idx2(x+1, y))] - x_velocities[IDX2(idx2(x-1, y))];
-      float delta_vy = y_velocities[IDX2(idx2(x, y+1))] - y_velocities[IDX2(idx2(x, y-1))];
-      previous_y_velocities[IDX2(idx)] = -0.5f * h * (delta_vx + delta_vy);
-      previous_x_velocities[IDX2(idx)] = 0;
+      float x_velocity_derivative = x_velocities[IDX2(wrap_idx2(idx2(x+1, y)))] - x_velocities[IDX2(wrap_idx2(idx2(x-1, y)))];
+      float y_velocity_derivative = y_velocities[IDX2(wrap_idx2(idx2(x, y+1)))] - y_velocities[IDX2(wrap_idx2(idx2(x, y-1)))];
+      divergence[IDX2(idx)] = -0.5f * h * (x_velocity_derivative + y_velocity_derivative);
+      preasure[IDX2(idx)] = 0;
     }
   }
 
@@ -124,13 +125,12 @@ void project(float *x_velocities, float *y_velocities, float *previous_x_velocit
         idx2 idx = idx2(x, y);
         float sum = 0;
         for (int i = 0; i < NUM_NEIGHBORS; i++) {
-          sum += previous_y_velocities[IDX2(
-            wrap_idx2(idx2(
-              idx.x + adjancent_offsets[i].x,
-              idx.y + adjancent_offsets[i].y
-            )))];
+          sum += preasure[IDX2(wrap_idx2(idx2(
+            idx.x + adjancent_offsets[i].x,
+            idx.y + adjancent_offsets[i].y
+          )))];
         }
-        previous_y_velocities[IDX2(idx)] = (previous_y_velocities[IDX2(idx)] + sum) / 4;
+        preasure[IDX2(idx)] = (divergence[IDX2(idx)] + sum) / 4;
       }
     }
   }
@@ -138,8 +138,8 @@ void project(float *x_velocities, float *y_velocities, float *previous_x_velocit
   for (int y = 1; y <= HEIGHT; y++) {
     for (int x = 1; x <= WIDTH; x++) {
       idx2 idx = idx2(x, y);
-      x_velocities[IDX2(idx)] -= 0.5f * (previous_y_velocities[IDX2(idx2(x+1, y))] - previous_y_velocities[IDX2(idx2(x-1, y))]) / h;
-      y_velocities[IDX2(idx)] -= 0.5f * (previous_y_velocities[IDX2(idx2(x, y+1))] - previous_y_velocities[IDX2(idx2(x, y-1))]) / h;
+      x_velocities[IDX2(idx)] -= 0.5f * (preasure[IDX2(wrap_idx2(idx2(x+1, y)))] - preasure[IDX2(wrap_idx2(idx2(x-1, y)))]) / h;
+      y_velocities[IDX2(idx)] -= 0.5f * (preasure[IDX2(wrap_idx2(idx2(x, y+1)))] - preasure[IDX2(wrap_idx2(idx2(x, y-1)))]) / h;
     }
   }
 }
@@ -152,11 +152,11 @@ void step() {
   advect(previous_colors, colors, x_velocities, y_velocities);
 
   // velocity
-  // SWAP(previous_x_velocities, x_velocities);
-  // diffuse(previous_x_velocities, x_velocities, VISCOSITY);
-  // SWAP(previous_y_velocities, y_velocities);
-  // diffuse(previous_y_velocities, y_velocities, VISCOSITY);
-  // project(previous_x_velocities, previous_y_velocities, x_velocities, y_velocities);
+  SWAP(previous_x_velocities, x_velocities);
+  diffuse(previous_x_velocities, x_velocities, VISCOSITY);
+  SWAP(previous_y_velocities, y_velocities);
+  diffuse(previous_y_velocities, y_velocities, VISCOSITY);
+  project(previous_x_velocities, previous_y_velocities, x_velocities, y_velocities);
 
   // SWAP(previous_x_velocities, x_velocities);
   // SWAP(previous_y_velocities, y_velocities);

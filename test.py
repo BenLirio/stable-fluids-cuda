@@ -9,7 +9,7 @@ from pathlib import Path
 VIZ_PATH = '/usr/bin/viz'
 
 
-NUM_STEPS_VARIATIONS = [ 89, 1, 7, 30 ]
+NUM_STEPS_VARIATIONS = [ 89, 1, 7, 10, 30 ]
 WIDTH_VARIATIONS = [ 32, 3, 7, 19, 31, 72 ]
 HEIGHT_VARIATIONS = WIDTH_VARIATIONS
 DIFFUSION_RATE_VARIATIONS = [ 0.01, 0.005, 0.05, 0.1 ]
@@ -27,7 +27,7 @@ def default_config():
       "GAUSS_SEIDEL_ITERATIONS": GAUSS_SEIDEL_ITERATIONS_VARIATIONS[0],
       "TIME_STEP": TIME_STEP_VARIATIONS[0],
   }
-def random_config():
+def random_config(use_default):
   width = choice(WIDTH_VARIATIONS)
   height = choice(HEIGHT_VARIATIONS)
   diffusion_rate = choice(DIFFUSION_RATE_VARIATIONS)
@@ -37,7 +37,7 @@ def random_config():
   height = width
   diffusion_rate = 0.001
   time_step = 0.01
-  num_steps = 5
+  num_steps = 2
   return {
       "NUM_STEPS": num_steps,
       "WIDTH": width,

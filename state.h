@@ -9,5 +9,7 @@ extern float *previous_y_velocities;
 extern float *y_velocities;
 extern float *previous_colors;
 extern float *colors;
+extern float *preasure;
+extern float *divergence;
 
 #endif // STABLE_FLUIDS_CUDA_STATE_H
