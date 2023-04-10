@@ -79,7 +79,6 @@ void advect(float *previous_values, float *values, float *x_velocities, float *y
       if (ASSERTIONS_ENABLED) assert(wx0 >= 0.0f && wx0 <= 1.0f);
       float wx1 = 1 - wx0;
       if (ASSERTIONS_ENABLED) assert(wx1 >= 0.0f && wx1 <= 1.0f);
-      //float wy0 = pos_offset_by_velocity.y - idx_offset_by_velocity.y;
       float wy0 = min(min(
         abs(pos_offset_by_velocity.y - idx_offset_by_velocity.y),
         abs(pos_offset_by_velocity.y - (idx_offset_by_velocity.y + HEIGHT))
@@ -89,8 +88,8 @@ void advect(float *previous_values, float *values, float *x_velocities, float *y
       if (ASSERTIONS_ENABLED) assert(wy1 >= 0.0f && wy1 <= 1.0f);
       float weights[NUM_NEIGHBORS] = {
         wx1*wy1,
-        wx0*wy1,
         wx1*wy0,
+        wx0*wy1,
         wx0*wy0,
       };
       values[IDX2(idx)] = 0;
@@ -144,12 +143,15 @@ void project(float *x_velocities, float *y_velocities, float *preasure, float *d
 }
 
 void source_colors() {
+  vec2 center = vec2(WIDTH/2.0, HEIGHT/2.0);
   for (int y = 1; y <= HEIGHT; y++) {
     for (int x = 1; x <= WIDTH; x++) {
       idx2 idx = idx2(x, y);
-      if (x > WIDTH/2 - WIDTH*0.1 && x < WIDTH/2 + WIDTH*0.1 && y > HEIGHT/2 - HEIGHT*0.1 && y < HEIGHT/2 + HEIGHT*0.1) {
-        colors[IDX2(idx)] += 0.01;
-      }
+      vec2 position = vec2((float)x, (float)y);
+      float distance = fmax(vec2_dist(center, position), 0.01);
+      float magnitude = 0.01*((4+(rand()/(float)RAND_MAX))/(distance*distance));
+      colors[IDX2(idx)] += magnitude;
+      previous_colors[IDX2(idx)] += magnitude;
     }
   }
 }
@@ -163,14 +165,20 @@ void sink_colors() {
   }
 }
 void source_velocity() {
+  vec2 center = vec2(WIDTH/2.0, HEIGHT/2.0);
   for (int y = 1; y <= HEIGHT; y++) {
     for (int x = 1; x <= WIDTH; x++) {
       idx2 idx = idx2(x, y);
-      y_velocities[IDX2(idx)] += 0.1*fabs(sin(x*0.1 + y*0.1 + current_step/(float)NUM_STEPS));
-      previous_y_velocities[IDX2(idx)] += 0.1*fabs(sin(x*0.1 + y*0.1 + current_step/(float)NUM_STEPS));
-      x_velocities[IDX2(idx)] += 0.1*fabs(cos(x*0.1 + y*0.1 + current_step/(float)NUM_STEPS));
-      previous_x_velocities[IDX2(idx)] += 0.1*fabs(cos(x*0.1 + y*0.1 + current_step/(float)NUM_STEPS));
-
+      vec2 position = vec2((float)x, (float)y);
+      float distance = fmax(vec2_dist(center, position), 0.01);
+      float magnitude = 0.01*((4+(rand()/(float)RAND_MAX))/(distance*distance));
+      float percent_complete = (float)current_step / (float)NUM_STEPS;
+      float x_magnitude = magnitude*cos(percent_complete*M_PI*10.0);
+      float y_magnitude = magnitude*sin(percent_complete*M_PI*10.0);
+      x_velocities[IDX2(idx)] += x_magnitude;
+      previous_x_velocities[IDX2(idx)] += x_magnitude;
+      y_velocities[IDX2(idx)] += y_magnitude;
+      previous_y_velocities[IDX2(idx)] += y_magnitude;
     }
   }
 }
@@ -197,7 +205,7 @@ void step() {
 
   // velocity
   source_velocity();
-  sink_velocity();
+  // sink_velocity();
   SWAP(previous_x_velocities, x_velocities);
   diffuse(previous_x_velocities, x_velocities, VISCOSITY);
   SWAP(previous_y_velocities, y_velocities);

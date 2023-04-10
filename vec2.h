@@ -8,6 +8,7 @@ struct vec2 {
 typedef struct vec2 vec2;
 #define vec2(x, y) ((vec2) { x, y })
 vec2 wrap_vec2(vec2);
+float vec2_dist(vec2, vec2);
 
 struct idx2 {
   int x;

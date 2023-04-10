@@ -24,6 +24,16 @@ vec2 wrap_vec2(vec2 u) {
   return vec2(x, y);
 }
 
+float vec2_dist(vec2 u, vec2 v) {
+  float dx = fabs(u.x - v.x);
+  if (dx > WIDTH - dx) dx = WIDTH - dx;
+  dx = dx/((float) WIDTH);
+  float dy = fabs(u.y - v.y);
+  if (dy > HEIGHT - dy) dy = HEIGHT - dy;
+  dy = dy/((float) HEIGHT);
+  return sqrt(dx*dx + dy*dy);
+}
+
 idx2 wrap_idx2(idx2 u) {
   int x = u.x;
   while (x < 1) { x += WIDTH; }
