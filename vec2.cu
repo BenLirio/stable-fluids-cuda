@@ -44,16 +44,6 @@ idx2 wrap_idx2(idx2 u) {
   return idx2(x, y);
 }
 
-idx2 wrap_idx2_0_offset(idx2 u) {
-  int x = u.x;
-  while (x < 0) { x += WIDTH; }
-  while (x >= WIDTH) { x -= WIDTH; }
-  int y = u.y;
-  while (y < 0) { y += HEIGHT; }
-  while (y >= HEIGHT) { y -= HEIGHT; }
-  return idx2(x, y);
-}
-
 idx2 idx2_add(idx2 u, idx2 v) {
   return idx2(u.x+v.x, u.y+v.y);
 }

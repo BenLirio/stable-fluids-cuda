@@ -41,4 +41,8 @@
 #define VERBOSE_ASSERTIONS 0
 
 
+// Testing params
+#define EQ_THRESHOLD 0.0001f
+
+
 #endif // STABLE_FLUIDS_CUDA_CONFIG_H
