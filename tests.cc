@@ -2,6 +2,7 @@
 #include "vec2.h"
 #include "gold.h"
 #include "config.h"
+#include <math.h>
 
 TEST(IDX2, wrap_0) {
   idx2 u = wrap_idx2(idx2(WIDTH, HEIGHT));
@@ -36,8 +37,13 @@ TEST(VEC2, wrap_1) {
 }
 TEST(VEC2, wrap_2) {
   vec2 u = wrap_vec2(vec2(WIDTH+0.501, HEIGHT+0.501));
-  EXPECT_FLOAT_EQ(u.x, 0.501);
-  EXPECT_FLOAT_EQ(u.y, 0.501);
+  if (fabs(u.x - 0.501) > EQ_THRESHOLD) {
+    FAIL() << "u.x = " << u.x << " != 0.501";
+  }
+  if (fabs(u.y - 2.0) > EQ_THRESHOLD) {
+    FAIL() << "u.y = " << u.y << " != 0.501";
+  }
+
 }
 TEST(VEC2, wrap_3) {
   vec2 u = wrap_vec2(vec2(0.0, 0.0));
@@ -140,4 +146,9 @@ TEST(Diffuse, single_cell) {
       EXPECT_NEAR(color[IDX2(idx)], 1.0, EQ_THRESHOLD);
     }
   }
+}
+
+int main(int argc, char **argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }
