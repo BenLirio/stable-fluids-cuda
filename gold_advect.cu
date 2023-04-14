@@ -18,15 +18,9 @@ void gold_advect(float *previous_values, float *values, float *x_velocities, flo
       vec2 pos_offset_by_velocity = vec2_add(pos, vec2_scale(-alpha, velocity));
       idx2 idx_offset_by_velocity = idx2_of_vec2(pos_offset_by_velocity);
       vec2 pos_offset_by_velocity_floored = vec2_of_idx2(idx_offset_by_velocity);
-      float wx0 = min(min(
-        abs(pos_offset_by_velocity.x - idx_offset_by_velocity.x),
-        abs(pos_offset_by_velocity.x - (idx_offset_by_velocity.x + WIDTH))
-      ), abs(pos_offset_by_velocity.x - (idx_offset_by_velocity.x - WIDTH)));
+      float wx0 = vec2_x_dist(pos_offset_by_velocity, pos_offset_by_velocity_floored);
       float wx1 = 1 - wx0;
-      float wy0 = min(min(
-        abs(pos_offset_by_velocity.y - idx_offset_by_velocity.y),
-        abs(pos_offset_by_velocity.y - (idx_offset_by_velocity.y + HEIGHT))
-      ), abs(pos_offset_by_velocity.y - (idx_offset_by_velocity.y - HEIGHT)));
+      float wy0 = vec2_y_dist(pos_offset_by_velocity, pos_offset_by_velocity_floored);
       float wy1 = 1 - wy0;
       float weights[NUM_NEIGHBORS] = {
         wx1*wy1,
@@ -34,15 +28,16 @@ void gold_advect(float *previous_values, float *values, float *x_velocities, flo
         wx0*wy1,
         wx0*wy0,
       };
-      values[IDX2(idx)] = 0;
+      float new_value = 0.0;
       for (int i = 0; i < NUM_NEIGHBORS; i++) {
         float weight = weights[i];
         idx2 neighbor = idx2_wrap(idx2(
           idx_offset_by_velocity.x + lower_right_square_offsets[i].x,
           idx_offset_by_velocity.y + lower_right_square_offsets[i].y
         ));
-        values[IDX2(idx)] += weight*previous_values[IDX2(neighbor)];
+        new_value += weight*previous_values[IDX2(neighbor)];
       }
+      values[IDX2(idx)] = new_value;
     }
   }
 }
