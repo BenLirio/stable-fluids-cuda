@@ -1,6 +1,6 @@
 #include "gold.h"
 #include "macros.h"
-#include "config.h"
+#include "compile_options.h"
 #include "vec2.h"
 #include "idx2.h"
 #include "state.h"

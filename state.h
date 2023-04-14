@@ -1,5 +1,3 @@
-#include "config.h"
-
 #ifndef STABLE_FLUIDS_CUDA_STATE_H
 #define STABLE_FLUIDS_CUDA_STATE_H
 

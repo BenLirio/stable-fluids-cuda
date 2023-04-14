@@ -2,7 +2,7 @@
 #include "idx2.h"
 #include "vec2.h"
 #include "gold.h"
-#include "config.h"
+#include "compile_options.h"
 #include <math.h>
 #include "macros.h"
 

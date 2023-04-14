@@ -1,5 +1,6 @@
 #include "vec2.h"
-#include "config.h"
+#include "compile_options.h"
+#include "macros.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
