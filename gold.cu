@@ -1,4 +1,5 @@
 #include "gold.h"
+#include "macros.h"
 #include "config.h"
 #include "vec2.h"
 #include "idx2.h"

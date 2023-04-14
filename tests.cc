@@ -4,6 +4,7 @@
 #include "gold.h"
 #include "config.h"
 #include <math.h>
+#include "macros.h"
 
 TEST(IDX2, wrap_0) {
   idx2 u = wrap_idx2(idx2(WIDTH, HEIGHT));

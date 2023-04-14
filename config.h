@@ -29,20 +29,15 @@
 #define TIME_STEP 0.01f
 #endif
 
-#define COLOR_SINK_RATE 0.1f
-#define VELOCITY_SINK_RATE 0.1f
+
 
 #define NUM_NEIGHBORS 4
-#define IDX2(idx2) ((idx2.y-1) * WIDTH + (idx2.x-1))
-#define IDX2_0_OFFSET(idx2) (((idx2.y) * (WIDTH)) + (idx2.x))
-#define SWAP(x0, x) {float *tmp = x0; x0 = x; x = tmp;}
-#define N (WIDTH * HEIGHT)
 #define ASSERTIONS_ENABLED 0
 #define VERBOSE_ASSERTIONS 0
-
-
-// Testing params
 #define EQ_THRESHOLD 0.0001f
+#define COLOR_SINK_RATE 0.1f
+#define VELOCITY_SINK_RATE 0.1f
+#define N (WIDTH * HEIGHT)
 
 
 #endif // STABLE_FLUIDS_CUDA_CONFIG_H
