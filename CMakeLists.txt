@@ -3,6 +3,14 @@ project(stable-fluids-cuda)
 set(CMAKE_CXX_STANDARD 17)
 enable_language(CUDA)
 
+find_package(OpenMP)
+if(OPENMP_FOUND)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif()
+
+
 include(FetchContent)
 FetchContent_Declare(
   googletest
@@ -62,6 +70,11 @@ enable_testing()
 add_executable(${PROJECT_NAME}-gold-diffuse-tests gold_diffuse_tests.cc ${COMMON_SOURCE_FILES})
 add_executable(${PROJECT_NAME}-vec2-tests vec2_tests.cc ${COMMON_SOURCE_FILES})
 add_executable(${PROJECT_NAME}-idx2-tests idx2_tests.cc ${COMMON_SOURCE_FILES})
+if(OPENMP_FOUND)
+  target_link_libraries(${PROJECT_NAME}-gold-diffuse-tests OpenMP::OpenMP_CXX)
+  target_link_libraries(${PROJECT_NAME}-vec2-tests OpenMP::OpenMP_CXX)
+  target_link_libraries(${PROJECT_NAME}-idx2-tests OpenMP::OpenMP_CXX)
+endif()
 target_link_libraries(${PROJECT_NAME}-gold-diffuse-tests GTest::gtest_main)
 target_link_libraries(${PROJECT_NAME}-vec2-tests GTest::gtest_main)
 target_link_libraries(${PROJECT_NAME}-idx2-tests GTest::gtest_main)

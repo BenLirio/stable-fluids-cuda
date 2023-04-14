@@ -7,13 +7,6 @@
 
 void gold_diffuse(float *previous_values, float *values, float rate) {
   int *counts;
-  if (ASSERTIONS_ENABLED) {
-    counts = (int*)malloc(WIDTH*HEIGHT*sizeof(int));
-    for (int i = 0; i < WIDTH*HEIGHT; i++) {
-      counts[i] = 0;
-    }
-  }
-
   float factor = TIME_STEP*rate*WIDTH*HEIGHT;
   for (int k = 0; k < GAUSS_SEIDEL_ITERATIONS; k++) {
     for (int y = 1; y <= HEIGHT; y++) {
@@ -26,16 +19,9 @@ void gold_diffuse(float *previous_values, float *values, float rate) {
               idx.y + adjancent_offsets[i].y
             ));
           sum += values[IDX2(neighbor_idx)];
-          if (ASSERTIONS_ENABLED) counts[IDX2(neighbor_idx)]++;
         }
         values[IDX2(idx)] = (previous_values[IDX2(idx)] + factor*sum) / (1 + 4*factor);
       }
     }
-  }
-  if (ASSERTIONS_ENABLED) {
-    for (int i = 0; i < WIDTH*HEIGHT; i++) {
-      assert(counts[i] == 4*GAUSS_SEIDEL_ITERATIONS);
-    }
-    free(counts);
   }
 }

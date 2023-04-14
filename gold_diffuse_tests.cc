@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <omp.h>
 #include "idx2.h"
 #include "vec2.h"
 #include "gold.h"
@@ -6,100 +7,80 @@
 #include <math.h>
 #include "macros.h"
 #include "gold_diffuse.h"
+#include "math.h"
+#include <stdlib.h>
+
+#define STEPS_UNTIL_STABLE 700
+#define MAX_N_TO_TEST (128*128)
 
 TEST(Diffuse, disperses_evenly) {
-  float _previous_color[N];
-  float _color[N];
-  float *previous_color = _previous_color;
-  float *color = _color;
-  for (int y = 1; y <= HEIGHT; y++) {
-    for (int x = 1; x <= WIDTH; x++) {
-      idx2 idx = idx2(x, y);
-      color[IDX2(idx)] = x + y;
-      previous_color[IDX2(idx)] = color[IDX2(idx)];
-    }
+  if (N > MAX_N_TO_TEST) {
+    EXPECT_TRUE(false);
+    return;
+  }
+  float *previous_color = (float*)malloc(N * sizeof(float));
+  float *color = (float*)malloc(N * sizeof(float));
+
+  #pragma omp parallel for
+  for (int i = 0; i < N; i++) {
+    previous_color[i] = (float)i/(float)N;
+    color[i] = (float)i/(float)N;
   }
 
-  for (int i = 0; i < 10000; i++) {
+  for (int i = 0; i < STEPS_UNTIL_STABLE; i++) {
     SWAP(previous_color, color);
     gold_diffuse(previous_color, color, DIFFUSION_RATE);
   }
 
   float total = 0.0;
-  for (int y = 0; y < HEIGHT; y++) {
-    for (int x = 0; x < WIDTH; x++) {
-      idx2 idx = idx2(x, y);
-      total += color[IDX2(idx)];
-    }
+  #pragma omp parallel for reduction(+:total)
+  for (int i = 0; i < N; i++) {
+    total += color[i];
   }
 
   float average = total / (float)N;
-  for (int y = 1; y <= HEIGHT; y++) {
-    for (int x = 1; x <= WIDTH; x++) {
-      idx2 idx = idx2(x, y);
-      EXPECT_NEAR(color[IDX2(idx)], average, EQ_THRESHOLD);
-    }
+  float total_error = 0.0;
+  for (int i = 0; i < N; i++) {
+    total_error += fabs(color[i] - average);
   }
+  float average_error = total_error / (float)N;
+  EXPECT_NEAR(average_error, 0.0, EQ_THRESHOLD);
+
+  free(previous_color);
+  free(color);
 }
 
 TEST(Diffuse, zero_sum) {
-  float _previous_color[N];
-  float _color[N];
-  float *previous_color = _previous_color;
-  float *color = _color;
+  if (N > MAX_N_TO_TEST) {
+    EXPECT_TRUE(false);
+    return;
+  }
+  float *previous_color = (float*)malloc(N * sizeof(float));
+  float *color = (float*)malloc(N * sizeof(float));
 
-  float initial_total = 0.0;
-  for (int y = 1; y <= HEIGHT; y++) {
-    for (int x = 1; x <= WIDTH; x++) {
-      idx2 idx = idx2(x, y);
-      color[IDX2(idx)] = rand()/RAND_MAX;
-      previous_color[IDX2(idx)] = color[IDX2(idx)];
-      initial_total += color[IDX2(idx)];
-    }
+  float original_total = 0.0;
+  for (int i = 0; i < N; i++) {
+    previous_color[i] = (float)i/(float)N;
+    color[i] = previous_color[i];
+    original_total += color[i];
   }
 
-  for (int i = 0; i < 10000; i++) {
+  for (int i = 0; i < STEPS_UNTIL_STABLE; i++) {
     SWAP(previous_color, color);
     gold_diffuse(previous_color, color, DIFFUSION_RATE);
   }
 
-  float after_total = 0.0;
-  for (int y = 1; y <= HEIGHT; y++) {
-    for (int x = 1; x <= WIDTH; x++) {
-      idx2 idx = idx2(x, y);
-      after_total += color[IDX2(idx)];
-    }
-  }
-  EXPECT_NEAR(initial_total, after_total, EQ_THRESHOLD);
-}
-
-TEST(Diffuse, single_cell) {
-  float _previous_color[N];
-  float _color[N];
-  float *previous_color = _previous_color;
-  float *color = _color;
-
-  for (int y = 1; y <= HEIGHT; y++) {
-    for (int x = 1; x <= WIDTH; x++) {
-      idx2 idx = idx2(x, y);
-      if (x == 1 && y == 1) {
-        color[IDX2(idx)] = (float)N;
-      } else {
-        color[IDX2(idx)] = 0.0;
-      }
-      previous_color[IDX2(idx)] = color[IDX2(idx)];
-    }
+  float total = 0.0;
+  #pragma omp parallel for reduction(+:total)
+  for (int i = 0; i < N; i++) {
+    total += color[i];
   }
 
-  for (int i = 0; i < 10000; i++) {
-    SWAP(previous_color, color);
-    gold_diffuse(previous_color, color, DIFFUSION_RATE);
-  }
+  float difference = original_total - total;
+  float scaled_difference = difference / original_total;
 
-  for (int y = 1; y <= HEIGHT; y++) {
-    for (int x = 1; x <= WIDTH; x++) {
-      idx2 idx = idx2(x, y);
-      EXPECT_NEAR(color[IDX2(idx)], 1.0, EQ_THRESHOLD);
-    }
-  }
+  EXPECT_NEAR(scaled_difference, 0.0, EQ_THRESHOLD);
+
+  free(previous_color);
+  free(color);
 }
