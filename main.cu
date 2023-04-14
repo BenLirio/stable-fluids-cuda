@@ -5,7 +5,24 @@
 #include <stdio.h>
 #include "vec2.h"
 
+float _vxs0[N];
+float _vxs[N];
+float _vys0[N];
+float _vys[N];
+float _cs0[N];
+float _cs[N];
+float _preasure[N];
+float _divergence[N];
+
 void init() {
+  previous_x_velocities = _vxs0;
+  x_velocities = _vxs;
+  previous_y_velocities = _vys0;
+  y_velocities = _vys;
+  previous_colors = _cs0;
+  colors = _cs;
+  preasure = _preasure;
+  divergence = _divergence;
   for (int y = 1; y <= HEIGHT; y++) {
     for (int x = 1; x <= WIDTH; x++) {
       idx2 idx = idx2(x, y);
