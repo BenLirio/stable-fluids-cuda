@@ -5,6 +5,7 @@
 #include "compile_options.h"
 #include <math.h>
 #include "macros.h"
+#include "gold_diffuse.h"
 
 TEST(Diffuse, disperses_evenly) {
   float _previous_color[N];
@@ -21,7 +22,7 @@ TEST(Diffuse, disperses_evenly) {
 
   for (int i = 0; i < 10000; i++) {
     SWAP(previous_color, color);
-    diffuse(previous_color, color, DIFFUSION_RATE);
+    gold_diffuse(previous_color, color, DIFFUSION_RATE);
   }
 
   float total = 0.0;
@@ -59,7 +60,7 @@ TEST(Diffuse, zero_sum) {
 
   for (int i = 0; i < 10000; i++) {
     SWAP(previous_color, color);
-    diffuse(previous_color, color, DIFFUSION_RATE);
+    gold_diffuse(previous_color, color, DIFFUSION_RATE);
   }
 
   float after_total = 0.0;
@@ -92,7 +93,7 @@ TEST(Diffuse, single_cell) {
 
   for (int i = 0; i < 10000; i++) {
     SWAP(previous_color, color);
-    diffuse(previous_color, color, DIFFUSION_RATE);
+    gold_diffuse(previous_color, color, DIFFUSION_RATE);
   }
 
   for (int y = 1; y <= HEIGHT; y++) {

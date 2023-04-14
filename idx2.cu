@@ -1,5 +1,6 @@
 #include "idx2.h"
 #include "compile_options.h"
+#include "macros.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
@@ -17,3 +18,11 @@ idx2 wrap_idx2(idx2 u) {
 idx2 idx2_add(idx2 u, idx2 v) {
   return idx2(u.x+v.x, u.y+v.y);
 }
+
+idx2 _adjancent_offsets[NUM_NEIGHBORS] = {
+    idx2(0, 1),
+    idx2(1, 0),
+    idx2(0, -1),
+    idx2(-1, 0),
+};
+idx2 *adjancent_offsets = _adjancent_offsets;
