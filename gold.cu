@@ -1,6 +1,7 @@
 #include "gold.h"
 #include "config.h"
 #include "vec2.h"
+#include "idx2.h"
 #include "state.h"
 #include <stdlib.h>
 #include <stdio.h>

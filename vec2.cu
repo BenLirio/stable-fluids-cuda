@@ -33,17 +33,3 @@ float vec2_dist(vec2 u, vec2 v) {
   dy = dy/((float) HEIGHT);
   return sqrt(dx*dx + dy*dy);
 }
-
-idx2 wrap_idx2(idx2 u) {
-  int x = u.x;
-  while (x < 1) { x += WIDTH; }
-  while (x > WIDTH) { x -= WIDTH; }
-  int y = u.y;
-  while (y < 1) { y += HEIGHT; }
-  while (y > HEIGHT) { y -= HEIGHT; }
-  return idx2(x, y);
-}
-
-idx2 idx2_add(idx2 u, idx2 v) {
-  return idx2(u.x+v.x, u.y+v.y);
-}

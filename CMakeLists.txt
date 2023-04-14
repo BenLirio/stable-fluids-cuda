@@ -55,10 +55,10 @@ endif()
 add_definitions(-DTIME_STEP=${TIME_STEP})
 
 
-add_executable(${PROJECT_NAME} main.cu gold.cu vec2.cu state.cu)
+add_executable(${PROJECT_NAME} main.cu gold.cu vec2.cu state.cu idx2.cu)
 
 enable_testing()
-add_executable(${PROJECT_NAME}-tests tests.cc gold.cu vec2.cu state.cu)
+add_executable(${PROJECT_NAME}-tests tests.cc gold.cu vec2.cu state.cu idx2.cu)
 target_link_libraries(${PROJECT_NAME}-tests GTest::gtest_main)
 
 include(GoogleTest)

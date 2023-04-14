@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include "idx2.h"
 #include "vec2.h"
 #include "gold.h"
 #include "config.h"
