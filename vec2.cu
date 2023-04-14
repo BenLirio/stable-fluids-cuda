@@ -4,25 +4,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <math.h>
+
+float positive_fmod(float x, float m) {
+  float r = fmod(x, m);
+  return r < 0 ? r + m : r;
+}
 
 vec2 vec2_wrap(vec2 u) {
-  float F_WIDTH = (float) WIDTH;
-  float F_HEIGHT = (float) HEIGHT;
-  float x = u.x;
-  while (x < 0.5) { x += F_WIDTH; }
-  while (x > (F_WIDTH+0.5)) { x -= F_WIDTH; }
-  float y = u.y;
-  while (y < 0.5) { y += F_HEIGHT; }
-  while (y > (F_HEIGHT+0.5)) { y -= F_HEIGHT; }
-  if (ASSERTIONS_ENABLED && VERBOSE_ASSERTIONS && (x < 0.5 || x > (F_WIDTH+0.5))) {
-    fprintf(stderr, "vec2_wrap: Expected x to be in [0.5, %f], got %f\n", F_WIDTH+0.5, x);
-  }
-  if (ASSERTIONS_ENABLED && VERBOSE_ASSERTIONS && (y < 0.5 || y > (F_HEIGHT+0.5))) {
-    fprintf(stderr, "vec2_wrap: Expected y to be in [0.5, %f], got %f\n", F_HEIGHT+0.5, y);
-  }
-  if (ASSERTIONS_ENABLED) assert(x >= 0.5f && x <= (F_WIDTH+0.5f));
-  if (ASSERTIONS_ENABLED) assert(y >= 0.5f && y <= (F_HEIGHT+0.5f));
-  return vec2(x, y);
+  float offset = 0.5;
+  return vec2(
+    positive_fmod(u.x-offset, (float)WIDTH) + offset,
+    positive_fmod(u.y-offset, (float)HEIGHT) + offset
+  );
 }
 
 float vec2_dist(vec2 u, vec2 v) {

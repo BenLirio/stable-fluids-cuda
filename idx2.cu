@@ -5,18 +5,21 @@
 #include <stdio.h>
 #include <assert.h>
 
+
+int mod(int n, int m) {
+  int r = n % m;
+  return r < 0 ? r + m : r;
+}
+
 idx2 idx2_wrap(idx2 u) {
-  int x = u.x;
-  while (x < 1) { x += WIDTH; }
-  while (x > WIDTH) { x -= WIDTH; }
-  int y = u.y;
-  while (y < 1) { y += HEIGHT; }
-  while (y > HEIGHT) { y -= HEIGHT; }
-  return idx2(x, y);
+  return idx2(
+    mod(u.x-1, WIDTH) + 1,
+    mod(u.y-1, HEIGHT) + 1
+  );
 }
 
 idx2 idx2_add(idx2 u, idx2 v) {
-  return idx2(u.x+v.x, u.y+v.y);
+  return idx2_wrap(idx2(u.x+v.x, u.y+v.y));
 }
 
 idx2 _adjancent_offsets[NUM_NEIGHBORS] = {
