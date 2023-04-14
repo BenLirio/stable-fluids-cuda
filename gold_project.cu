@@ -17,14 +17,16 @@ float get_y_derivative(float *y_velocities, idx2 idx) {
 }
 
 void gold_project(float *x_velocities, float *y_velocities, float *pressure, float *divergence) {
+
   float h = 1.0f / sqrt(N);
+
   for (int y = 1; y <= HEIGHT; y++) {
     for (int x = 1; x <= WIDTH; x++) {
       idx2 idx = idx2(x, y);
-      float x_velocity_derivative = x_velocities[IDX2(idx2_wrap(idx2(x+1, y)))] - x_velocities[IDX2(idx2_wrap(idx2(x-1, y)))];
-      float y_velocity_derivative = y_velocities[IDX2(idx2_wrap(idx2(x, y+1)))] - y_velocities[IDX2(idx2_wrap(idx2(x, y-1)))];
-      divergence[IDX2(idx)] = -0.5f * h * (x_velocity_derivative + y_velocity_derivative);
-      pressure[IDX2(idx)] = 0;
+      float x_velocity_derivative = get_x_derivative(x_velocities, idx);
+      float y_velocity_derivative = get_y_derivative(y_velocities, idx);
+      divergence[IDX2(idx)] = -h * (x_velocity_derivative + y_velocity_derivative)/2;
+      pressure[IDX2(idx)] = 0.0;
     }
   }
 
@@ -34,10 +36,8 @@ void gold_project(float *x_velocities, float *y_velocities, float *pressure, flo
         idx2 idx = idx2(x, y);
         float sum = 0;
         for (int i = 0; i < NUM_NEIGHBORS; i++) {
-          sum += pressure[IDX2(idx2_wrap(idx2(
-            idx.x + adjancent_offsets[i].x,
-            idx.y + adjancent_offsets[i].y
-          )))];
+          idx2 neighbor_idx = idx2_add(idx, adjancent_offsets[i]);
+          sum += pressure[IDX2(neighbor_idx)];
         }
         pressure[IDX2(idx)] = (divergence[IDX2(idx)] + sum) / 4;
       }
@@ -47,8 +47,8 @@ void gold_project(float *x_velocities, float *y_velocities, float *pressure, flo
   for (int y = 1; y <= HEIGHT; y++) {
     for (int x = 1; x <= WIDTH; x++) {
       idx2 idx = idx2(x, y);
-      x_velocities[IDX2(idx)] -= 0.5f * (pressure[IDX2(idx2_wrap(idx2(x+1, y)))] - pressure[IDX2(idx2_wrap(idx2(x-1, y)))]) / h;
-      y_velocities[IDX2(idx)] -= 0.5f * (pressure[IDX2(idx2_wrap(idx2(x, y+1)))] - pressure[IDX2(idx2_wrap(idx2(x, y-1)))]) / h;
+      x_velocities[IDX2(idx)] -= get_x_derivative(pressure, idx) / (2*h);
+      y_velocities[IDX2(idx)] -= get_y_derivative(pressure, idx) / (2*h);
     }
   }
 }
