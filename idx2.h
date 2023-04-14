@@ -1,6 +1,8 @@
 #ifndef STABLE_FLUIDS_CUDA_IDX2_H
 #define STABLE_FLUIDS_CUDA_IDX2_H
 
+#include "vec2.h"
+
 #define IDX2(idx2) ((idx2.y-1) * WIDTH + (idx2.x-1))
 
 

@@ -62,7 +62,7 @@ if(NOT DEFINED TIME_STEP)
 endif()
 add_definitions(-DTIME_STEP=${TIME_STEP})
 
-set(COMMON_SOURCE_FILES vec2.cu idx2.cu state.cu gold.cu gold_diffuse.cu gold_advect.cu gold_project.cu)
+set(COMMON_SOURCE_FILES vec2.cu idx2.cu state.cu gold.cu gold_diffuse.cu gold_advect.cu gold_project.cu type_casting.cu)
 
 add_executable(${PROJECT_NAME} main.cu ${COMMON_SOURCE_FILES})
 

@@ -26,3 +26,18 @@ TEST(VEC2, wrap_3) {
   EXPECT_FLOAT_EQ(u.x, (float)WIDTH);
   EXPECT_FLOAT_EQ(u.y, (float)HEIGHT);
 }
+TEST(VEC2, dist_0) {
+  vec2 u = vec2_wrap(vec2(0.0, 0.0));
+  vec2 v = vec2_wrap(vec2(1.0, 1.0));
+  EXPECT_NEAR(vec2_dist(u, v), sqrt(2.0), EQ_THRESHOLD);
+}
+TEST(VEC2, dist_1) {
+  vec2 u = vec2_wrap(vec2(WIDTH, HEIGHT));
+  vec2 v = vec2_wrap(vec2(1.0, 1.0));
+  EXPECT_NEAR(vec2_dist(u, v), sqrt(2.0), EQ_THRESHOLD);
+}
+TEST(VEC2, dist_2) {
+  vec2 u = vec2_wrap(vec2(WIDTH+0.5, HEIGHT));
+  vec2 v = vec2_wrap(vec2(0.5, 1.0));
+  EXPECT_NEAR(vec2_dist(u, v), 1.0, EQ_THRESHOLD);
+}

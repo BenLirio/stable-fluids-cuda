@@ -19,7 +19,23 @@ vec2 vec2_wrap(vec2 u) {
   );
 }
 
+vec2 vec2_add(vec2 u, vec2 v) {
+  return vec2_wrap(vec2(u.x + v.x, u.y + v.y));
+}
+
+vec2 vec2_scale(float s, vec2 u) {
+  return vec2_wrap(vec2(u.x * s, u.y * s));
+}
+
 float vec2_dist(vec2 u, vec2 v) {
+  float dx = fabs(u.x - v.x);
+  if (dx > WIDTH - dx) dx = WIDTH - dx;
+  float dy = fabs(u.y - v.y);
+  if (dy > HEIGHT - dy) dy = HEIGHT - dy;
+  return sqrt(dx*dx + dy*dy);
+}
+
+float vec2_scaled_dist(vec2 u, vec2 v) {
   float dx = fabs(u.x - v.x);
   if (dx > WIDTH - dx) dx = WIDTH - dx;
   dx = dx/((float) WIDTH);

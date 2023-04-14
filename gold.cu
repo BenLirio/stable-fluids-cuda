@@ -19,7 +19,7 @@ void source_colors() {
     for (int x = 1; x <= WIDTH; x++) {
       idx2 idx = idx2(x, y);
       vec2 position = vec2((float)x, (float)y);
-      float distance = fmax(vec2_dist(center, position), 0.01);
+      float distance = fmax(vec2_scaled_dist(center, position), 0.01);
       float magnitude = 0.01*((4+(rand()/(float)RAND_MAX))/(distance*distance));
       colors[IDX2(idx)] += magnitude;
       previous_colors[IDX2(idx)] += magnitude;
@@ -41,7 +41,7 @@ void source_velocity() {
     for (int x = 1; x <= WIDTH; x++) {
       idx2 idx = idx2(x, y);
       vec2 position = vec2((float)x, (float)y);
-      float distance = fmax(vec2_dist(center, position), 0.01);
+      float distance = fmax(vec2_scaled_dist(center, position), 0.01);
       float magnitude = 0.01*((4+(rand()/(float)RAND_MAX))/(distance*distance));
       float percent_complete = (float)current_step / (float)NUM_STEPS;
       float x_magnitude = magnitude*cos(percent_complete*M_PI*10.0);
