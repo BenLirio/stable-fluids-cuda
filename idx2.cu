@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-idx2 wrap_idx2(idx2 u) {
+idx2 idx2_wrap(idx2 u) {
   int x = u.x;
   while (x < 1) { x += WIDTH; }
   while (x > WIDTH) { x -= WIDTH; }
@@ -26,3 +26,12 @@ idx2 _adjancent_offsets[NUM_NEIGHBORS] = {
     idx2(-1, 0),
 };
 idx2 *adjancent_offsets = _adjancent_offsets;
+
+idx2 _lower_right_square_offsets[NUM_NEIGHBORS] = {
+  idx2(0, 0),
+  idx2(0, 1),
+  idx2(1, 0),
+  idx2(1, 1),
+};
+
+idx2 *lower_right_square_offsets = _lower_right_square_offsets;

@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-vec2 wrap_vec2(vec2 u) {
+vec2 vec2_wrap(vec2 u) {
   float F_WIDTH = (float) WIDTH;
   float F_HEIGHT = (float) HEIGHT;
   float x = u.x;
@@ -15,10 +15,10 @@ vec2 wrap_vec2(vec2 u) {
   while (y < 0.5) { y += F_HEIGHT; }
   while (y > (F_HEIGHT+0.5)) { y -= F_HEIGHT; }
   if (ASSERTIONS_ENABLED && VERBOSE_ASSERTIONS && (x < 0.5 || x > (F_WIDTH+0.5))) {
-    fprintf(stderr, "wrap_vec2: Expected x to be in [0.5, %f], got %f\n", F_WIDTH+0.5, x);
+    fprintf(stderr, "vec2_wrap: Expected x to be in [0.5, %f], got %f\n", F_WIDTH+0.5, x);
   }
   if (ASSERTIONS_ENABLED && VERBOSE_ASSERTIONS && (y < 0.5 || y > (F_HEIGHT+0.5))) {
-    fprintf(stderr, "wrap_vec2: Expected y to be in [0.5, %f], got %f\n", F_HEIGHT+0.5, y);
+    fprintf(stderr, "vec2_wrap: Expected y to be in [0.5, %f], got %f\n", F_HEIGHT+0.5, y);
   }
   if (ASSERTIONS_ENABLED) assert(x >= 0.5f && x <= (F_WIDTH+0.5f));
   if (ASSERTIONS_ENABLED) assert(y >= 0.5f && y <= (F_HEIGHT+0.5f));

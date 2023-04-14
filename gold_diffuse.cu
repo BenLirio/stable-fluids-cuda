@@ -14,7 +14,7 @@ void gold_diffuse(float *previous_values, float *values, float rate) {
         idx2 idx = idx2(x, y);
         float sum = 0;
         for (int i = 0; i < NUM_NEIGHBORS; i++) {
-          idx2 neighbor_idx = wrap_idx2(idx2(
+          idx2 neighbor_idx = idx2_wrap(idx2(
               idx.x + adjancent_offsets[i].x,
               idx.y + adjancent_offsets[i].y
             ));
