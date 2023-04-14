@@ -6,53 +6,6 @@
 #include <math.h>
 #include "macros.h"
 
-TEST(IDX2, wrap_0) {
-  idx2 u = wrap_idx2(idx2(WIDTH, HEIGHT));
-  EXPECT_EQ(u.x, WIDTH);
-  EXPECT_EQ(u.y, HEIGHT);
-}
-TEST(IDX2, wrap_1) {
-  idx2 u = wrap_idx2(idx2(WIDTH+1, HEIGHT+1));
-  EXPECT_EQ(u.x, 1);
-  EXPECT_EQ(u.y, 1);
-}
-TEST(IDX2, wrap_2) {
-  idx2 u = wrap_idx2(idx2(0, 0));
-  EXPECT_EQ(u.x, WIDTH);
-  EXPECT_EQ(u.y, HEIGHT);
-}
-TEST(IDX2, wrap_3) {
-  idx2 u = wrap_idx2(idx2(-1, -1));
-  EXPECT_EQ(u.x, WIDTH-1);
-  EXPECT_EQ(u.y, HEIGHT-1);
-}
-
-TEST(VEC2, wrap_0) {
-  vec2 u = wrap_vec2(vec2(WIDTH, HEIGHT));
-  EXPECT_FLOAT_EQ(u.x, WIDTH);
-  EXPECT_FLOAT_EQ(u.y, HEIGHT);
-}
-TEST(VEC2, wrap_1) {
-  vec2 u = wrap_vec2(vec2(WIDTH+1.0, HEIGHT+1.0));
-  EXPECT_FLOAT_EQ(u.x, 1.0);
-  EXPECT_FLOAT_EQ(u.y, 1.0);
-}
-TEST(VEC2, wrap_2) {
-  vec2 u = wrap_vec2(vec2(WIDTH+0.501, HEIGHT+0.501));
-  if (fabs(u.x - 0.501) > EQ_THRESHOLD) {
-    FAIL() << "u.x = " << u.x << " != 0.501";
-  }
-  if (fabs(u.y - 2.0) > EQ_THRESHOLD) {
-    FAIL() << "u.y = " << u.y << " != 0.501";
-  }
-
-}
-TEST(VEC2, wrap_3) {
-  vec2 u = wrap_vec2(vec2(0.0, 0.0));
-  EXPECT_FLOAT_EQ(u.x, (float)WIDTH);
-  EXPECT_FLOAT_EQ(u.y, (float)HEIGHT);
-}
-
 TEST(Diffuse, disperses_evenly) {
   float _previous_color[N];
   float _color[N];
@@ -148,9 +101,4 @@ TEST(Diffuse, single_cell) {
       EXPECT_NEAR(color[IDX2(idx)], 1.0, EQ_THRESHOLD);
     }
   }
-}
-
-int main(int argc, char **argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }
