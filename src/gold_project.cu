@@ -1,8 +1,8 @@
 #include "gold_project.h"
-#include "compile_options.h"
-#include "macros.h"
-#include "idx2.h"
-#include "vec2.h"
+#include <compile_options.h>
+#include <macros.h>
+#include <idx2.h>
+#include <vec2.h>
 
 float get_x_derivative(float *x_velocities, idx2 idx) {
   idx2 next_idx = idx2_add(idx, idx2(1, 0));

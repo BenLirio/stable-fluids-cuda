@@ -1,7 +1,7 @@
 #include "gold_diffuse.h"
-#include "macros.h"
-#include "compile_options.h"
-#include "idx2.h"
+#include <macros.h>
+#include <compile_options.h>
+#include <idx2.h>
 #include <assert.h>
 
 

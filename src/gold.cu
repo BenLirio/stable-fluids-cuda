@@ -1,11 +1,11 @@
-#include "gold.h"
-#include "macros.h"
-#include "compile_options.h"
+#include <gold.h>
+#include <macros.h>
+#include <compile_options.h>
 #include "gold_advect.h"
 #include "gold_diffuse.h"
 #include "gold_project.h"
-#include "vec2.h"
-#include "idx2.h"
+#include <vec2.h>
+#include <idx2.h>
 #include "state.h"
 #include <stdlib.h>
 #include <stdio.h>

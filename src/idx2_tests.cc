@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
-#include "idx2.h"
-#include "vec2.h"
-#include "gold.h"
-#include "compile_options.h"
+#include <idx2.h>
+#include <vec2.h>
+#include <gold.h>
+#include <compile_options.h>
 #include <math.h>
-#include "macros.h"
+#include <macros.h>
 
 TEST(IDX2, wrap_0) {
   idx2 u = idx2_wrap(idx2(WIDTH, HEIGHT));
