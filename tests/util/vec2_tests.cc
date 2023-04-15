@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <util/idx2.h>
+#include <util/idx2.cuh>
 #include <util/vec2.h>
 #include <util/compile_options.h>
 #include <math.h>

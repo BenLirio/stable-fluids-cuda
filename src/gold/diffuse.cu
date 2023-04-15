@@ -1,12 +1,11 @@
 #include <gold/diffuse.h>
 #include <util/macros.h>
 #include <util/compile_options.h>
-#include <util/idx2.h>
+#include <util/idx2.cuh>
 #include <assert.h>
 
 
 void gold_diffuse(float *previous_values, float *values, float rate) {
-  int *counts;
   float factor = TIME_STEP*rate*WIDTH*HEIGHT;
   for (int k = 0; k < GAUSS_SEIDEL_ITERATIONS; k++) {
     for (int y = 1; y <= HEIGHT; y++) {

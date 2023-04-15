@@ -2,7 +2,7 @@
 #include <util/compile_options.h>
 #include <util/macros.h>
 #include <util/state.h>
-#include <util/idx2.h>
+#include <util/idx2.cuh>
 #include <stdio.h>
 #include <util/vec2.h>
 

@@ -1,25 +1,29 @@
-#include <util/idx2.h>
+#include <util/idx2.cuh>
 #include <util/compile_options.h>
 #include <util/macros.h>
 #include <util/vec2.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <cuda_runtime.h>
 
+__device__ int foo() {
+  return 1;
+}
 
-int mod(int n, int m) {
+__host__ __device__ int mod(int n, int m) {
   int r = n % m;
   return r < 0 ? r + m : r;
 }
 
-idx2 idx2_wrap(idx2 u) {
+__host__ __device__ idx2 idx2_wrap(idx2 u) {
   return idx2(
     mod(u.x-1, WIDTH) + 1,
     mod(u.y-1, HEIGHT) + 1
   );
 }
 
-idx2 idx2_add(idx2 u, idx2 v) {
+__host__ __device__ idx2 idx2_add(idx2 u, idx2 v) {
   return idx2_wrap(idx2(u.x+v.x, u.y+v.y));
 }
 

@@ -5,12 +5,13 @@
 #include <gold/diffuse.h>
 #include <gold/project.h>
 #include <util/vec2.h>
-#include <util/idx2.h>
+#include <util/idx2.cuh>
 #include <util/state.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
 #include <math.h>
+#include <kernel/diffuse.h>
 
 
 void source_colors() {
