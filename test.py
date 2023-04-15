@@ -55,9 +55,10 @@ def generate_gif(config):
       'make',
       '-C',
       build_dir,
+      'stable-fluids-cuda'
     ])
     stable_fluids_process = Popen([
-      f'{build_dir}/stable-fluids-cuda',
+      f'{build_dir}/src/stable-fluids-cuda',
     ], stdout=PIPE, stderr=sys.stderr)
     Path('gifs').mkdir(parents=True, exist_ok=True)
     with open(f'gifs/{config_to_string(config)}.gif', 'w') as gif_file:
