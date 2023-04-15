@@ -1,6 +1,7 @@
 
 add_subdirectory(gold)
 add_subdirectory(util)
+add_subdirectory(kernel)
 
 add_executable(${PROJECT_NAME} main.cu)
 target_link_libraries(${PROJECT_NAME} PRIVATE gold util)

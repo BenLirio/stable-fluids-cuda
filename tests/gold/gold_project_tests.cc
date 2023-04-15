@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
-#include <macros.h>
-#include "gold_project.h"
-#include <idx2.h>
+#include <util/macros.h>
+#include <gold/project.h>
+#include <util/idx2.h>
 #include <math.h>
 
 TEST(PROJECT, reduce_gradient) {

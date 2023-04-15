@@ -1,12 +1,12 @@
 #include <gtest/gtest.h>
 #include <omp.h>
-#include <idx2.h>
-#include <vec2.h>
-#include <gold.h>
-#include <compile_options.h>
+#include <util/idx2.h>
+#include <util/vec2.h>
+#include <gold/index.h>
+#include <util/compile_options.h>
 #include <math.h>
-#include <macros.h>
-#include "gold_diffuse.h"
+#include <util/macros.h>
+#include <gold/diffuse.h>
 #include "math.h"
 #include <stdlib.h>
 

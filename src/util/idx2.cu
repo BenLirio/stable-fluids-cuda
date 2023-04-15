@@ -1,7 +1,7 @@
-#include <idx2.h>
-#include <compile_options.h>
-#include <macros.h>
-#include <vec2.h>
+#include <util/idx2.h>
+#include <util/compile_options.h>
+#include <util/macros.h>
+#include <util/vec2.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>

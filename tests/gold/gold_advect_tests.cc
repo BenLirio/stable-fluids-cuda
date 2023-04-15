@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
-#include "gold_advect.h"
-#include <macros.h>
+#include <gold/advect.h>
+#include <util/macros.h>
 
 #define NUM_ADVECTION_STEPS 100
 TEST(Advect, zero_sum) {

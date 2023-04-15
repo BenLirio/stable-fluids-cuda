@@ -1,6 +1,6 @@
-#include "type_casting.h"
-#include <vec2.h>
-#include <idx2.h>
+#include <util/type_casting.h>
+#include <util/vec2.h>
+#include <util/idx2.h>
 
 idx2 idx2_of_vec2(vec2 v) {
   return idx2_wrap(idx2((int)v.x, (int)v.y));

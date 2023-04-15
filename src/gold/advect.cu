@@ -1,9 +1,9 @@
-#include "gold_advect.h"
-#include <macros.h>
-#include <compile_options.h>
-#include <vec2.h>
-#include <idx2.h>
-#include "type_casting.h"
+#include <gold/advect.h>
+#include <util/macros.h>
+#include <util/compile_options.h>
+#include <util/vec2.h>
+#include <util/idx2.h>
+#include <util/type_casting.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>

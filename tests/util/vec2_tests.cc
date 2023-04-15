@@ -1,10 +1,9 @@
 #include <gtest/gtest.h>
-#include <idx2.h>
-#include <vec2.h>
-#include <gold.h>
-#include <compile_options.h>
+#include <util/idx2.h>
+#include <util/vec2.h>
+#include <util/compile_options.h>
 #include <math.h>
-#include <macros.h>
+#include <util/macros.h>
 
 TEST(VEC2, wrap_0) {
   vec2 u = vec2_wrap(vec2(WIDTH, HEIGHT));
