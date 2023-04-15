@@ -4,7 +4,7 @@
 #include <util/state.h>
 #include <util/idx2.cuh>
 #include <stdio.h>
-#include <util/vec2.h>
+#include <util/vec2.cuh>
 
 float _vxs0[N];
 float _vxs[N];

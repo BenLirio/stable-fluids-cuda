@@ -1,9 +1,9 @@
 #include <gold/advect.h>
 #include <util/macros.h>
 #include <util/compile_options.h>
-#include <util/vec2.h>
+#include <util/vec2.cuh>
 #include <util/idx2.cuh>
-#include <util/type_casting.h>
+#include <util/type_casting.cuh>
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -31,11 +31,8 @@ void gold_advect(float *previous_values, float *values, float *x_velocities, flo
       float new_value = 0.0;
       for (int i = 0; i < NUM_NEIGHBORS; i++) {
         float weight = weights[i];
-        idx2 neighbor = idx2_wrap(idx2(
-          idx_offset_by_velocity.x + lower_right_square_offsets[i].x,
-          idx_offset_by_velocity.y + lower_right_square_offsets[i].y
-        ));
-        new_value += weight*previous_values[IDX2(neighbor)];
+        idx2 neighbor_idx = idx2_add(idx_offset_by_velocity, lower_right_square_offsets[i]);
+        new_value += weight*previous_values[IDX2(neighbor_idx)];
       }
       values[IDX2(idx)] = new_value;
     }

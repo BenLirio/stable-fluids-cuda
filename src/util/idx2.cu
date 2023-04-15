@@ -1,7 +1,7 @@
 #include <util/idx2.cuh>
 #include <util/compile_options.h>
 #include <util/macros.h>
-#include <util/vec2.h>
+#include <util/vec2.cuh>
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>

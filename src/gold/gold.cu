@@ -4,7 +4,7 @@
 #include <gold/advect.h>
 #include <gold/diffuse.h>
 #include <gold/project.h>
-#include <util/vec2.h>
+#include <util/vec2.cuh>
 #include <util/idx2.cuh>
 #include <util/state.h>
 #include <stdlib.h>

@@ -2,7 +2,7 @@
 #define STABLE_FLUIDS_CUDA_IDX2_H
 
 #include <cuda_runtime.h>
-#include <util/vec2.h>
+#include <util/vec2.cuh>
 
 #define IDX2(idx2) ((idx2.y-1) * WIDTH + (idx2.x-1))
 

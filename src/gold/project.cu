@@ -2,7 +2,7 @@
 #include <util/compile_options.h>
 #include <util/macros.h>
 #include <util/idx2.cuh>
-#include <util/vec2.h>
+#include <util/vec2.cuh>
 
 float get_x_derivative(float *x_velocities, idx2 idx) {
   idx2 next_idx = idx2_add(idx, idx2(1, 0));
