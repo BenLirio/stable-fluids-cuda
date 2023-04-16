@@ -2,6 +2,7 @@
 #include <util/macros.h>
 #include <gold/project.h>
 #include <util/idx2.cuh>
+#include <util/derivative.cuh>
 #include <math.h>
 
 TEST(PROJECT, reduce_gradient) {
