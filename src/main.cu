@@ -5,6 +5,7 @@
 #include <util/idx2.cuh>
 #include <stdio.h>
 #include <util/vec2.cuh>
+#include <kernel/index.cuh>
 
 float _vxs0[N];
 float _vxs[N];
@@ -12,8 +13,8 @@ float _vys0[N];
 float _vys[N];
 float _cs0[N];
 float _cs[N];
-float _preasure[N];
-float _divergence[N];
+float _pressures[N];
+float _divergences[N];
 
 void init() {
   previous_x_velocities = _vxs0;
@@ -22,8 +23,8 @@ void init() {
   y_velocities = _vys;
   previous_colors = _cs0;
   colors = _cs;
-  preasure = _preasure;
-  divergence = _divergence;
+  pressures = _pressures;
+  divergences = _divergences;
   for (int y = 1; y <= HEIGHT; y++) {
     for (int x = 1; x <= WIDTH; x++) {
       idx2 idx = idx2(x, y);
@@ -49,6 +50,16 @@ int main() {
       }
     }
     step();
+    // kernel_step_wrapper(
+    //   colors,
+    //   previous_colors,
+    //   x_velocities,
+    //   previous_x_velocities,
+    //   y_velocities,
+    //   previous_y_velocities,
+    //   pressures,
+    //   divergences
+    // );
   }
   return 0;
 }

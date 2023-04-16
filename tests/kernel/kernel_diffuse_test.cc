@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <gold/diffuse.h>
-#include <kernel/diffuse.h>
+#include <kernel/diffuse.cuh>
 #include <util/macros.h>
 #include <cuda_runtime.h>
 #include <util/compile_options.h>

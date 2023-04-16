@@ -6,6 +6,6 @@ float *previous_y_velocities;
 float *y_velocities;
 float *previous_colors;
 float *colors;
-float *preasure;
-float *divergence;
+float *pressures;
+float *divergences;
 int current_step = 0;
