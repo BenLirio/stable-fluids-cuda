@@ -5,7 +5,7 @@
 #include <util/macros.h>
 #include <util/state.h>
 
-void gold_sink_colors() {
+void gold_sink_colors(float *previous_colors, float *colors) {
   for (int y = 1; y <= HEIGHT; y++) {
     for (int x = 1; x <= WIDTH; x++) {
       idx2 idx = idx2(x, y);

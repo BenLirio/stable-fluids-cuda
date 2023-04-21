@@ -5,7 +5,7 @@
 #include <util/macros.h>
 #include <util/state.h>
 
-void sink_velocities() {
+void gold_sink_velocities(float *previous_x_velocities, float *previous_y_velocities, float *x_velocities, float *y_velocities) {
   for (int y = 1; y <= HEIGHT; y++) {
     for (int x = 1; x <= WIDTH; x++) {
       idx2 idx = idx2(x, y);

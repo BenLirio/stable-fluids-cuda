@@ -20,15 +20,15 @@
 
 void step() {
   // density
-  gold_source_colors();
-  gold_sink_colors();
+  gold_source_colors(previous_colors, colors);
+  gold_sink_colors(previous_colors, colors);
   SWAP(previous_colors, colors);
   gold_diffuse(previous_colors, colors, DIFFUSION_RATE);
   SWAP(previous_colors, colors);
   gold_advect(previous_colors, colors, x_velocities, y_velocities);
 
   // velocity
-  gold_source_velocities();
+  gold_source_velocities(previous_x_velocities, previous_y_velocities, x_velocities, y_velocities, current_step);
   // gold_sink_velocity();
   SWAP(previous_x_velocities, x_velocities);
   gold_diffuse(previous_x_velocities, x_velocities, VISCOSITY);
