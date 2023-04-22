@@ -46,7 +46,7 @@ TEST(Kernel, Project) {
 
   for (int i = 0; i < MAX_CONVERGENCE_ITERATIONS; i++) {
     gold_project(gold_x_velocities, gold_y_velocities, gold_pressures, gold_divergences);
-    kernel_project_wrapper(x_velocities, y_velocities, pressures, divergences);
+    kernel_project_test_harness(x_velocities, y_velocities, pressures, divergences);
 
     total_error = 0.0;
 

@@ -1,4 +1,5 @@
 #ifndef STABLE_FLUIDS_MACROS_H
+#include <cuda_runtime.h>
 #define STABLE_FLUIDS_MACROS_H
 
 #define SWAP(x0, x) {float *tmp = x0; x0 = x; x = tmp;}
@@ -11,6 +12,12 @@
 #define N (WIDTH * HEIGHT)
 
 #define BLOCK_SIZE 32
+#define BLOCK_DIM (dim3(BLOCK_SIZE, BLOCK_SIZE))
+#define GRID_DIM (dim3((WIDTH + BLOCK_SIZE - 1) / BLOCK_SIZE, (HEIGHT + BLOCK_SIZE - 1) / BLOCK_SIZE))
+
+#define RED 0
+#define BLACK 1
+
 
 #define MAX_CONVERGENCE_ITERATIONS 10000
 #define CHECK_CONVERGENCE_EVERY 100

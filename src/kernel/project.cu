@@ -70,7 +70,51 @@ __global__ void kernel_project_no_optimization(float *x_velocities, float *y_vel
 
 void (*kernel_project)(float *x_velocities, float *y_velocities, float *pressure, float *divergence) = kernel_project_no_optimization;
 
+__global__ void kernel_project_prepare(float *x_velocities, float *y_velocities, float *pressures, float *divergences) {
+  float h = 1.0f / sqrt((float)N);
+  idx2 idx = idx2(
+    blockIdx.x*blockDim.x + threadIdx.x + 1,
+    blockIdx.y*blockDim.y + threadIdx.y + 1
+  );
+  float x_velocity_derivative = get_x_derivative(x_velocities, idx);
+  float y_velocity_derivative = get_y_derivative(y_velocities, idx);
+  divergences[IDX2(idx)] = -h * (x_velocity_derivative + y_velocity_derivative)/2;
+  pressures[IDX2(idx)] = 0.0f;
+}
+__global__ void kernel_project_solve_red_black(float *x_velocities, float *y_velocities, float *pressures, float *divergences, int red) {
+  idx2 idx = idx2(
+    blockIdx.x*blockDim.x + threadIdx.x + 1,
+    blockIdx.y*blockDim.y + threadIdx.y + 1
+  );
+  if (idx.x > WIDTH || idx.y > HEIGHT) return;
+  if (idx.x % 2 == (idx.y + red) % 2) return;
+  pressures[IDX2(idx)] = (divergences[IDX2(idx)] + (
+      pressures[IDX2(idx2_add(idx, idx2(0, 1)))] +
+      pressures[IDX2(idx2_add(idx, idx2(0, -1)))] +
+      pressures[IDX2(idx2_add(idx, idx2(1, 0)))] +
+      pressures[IDX2(idx2_add(idx, idx2(-1, 0)))]
+  )) / 4;
+}
+__global__ void kernel_project_write(float *x_velocities, float *y_velocities, float *pressures, float *divergences) {
+  float h = 1.0f / sqrt((float)N);
+  idx2 idx = idx2(
+    blockIdx.x*blockDim.x + threadIdx.x + 1,
+    blockIdx.y*blockDim.y + threadIdx.y + 1
+  );
+  x_velocities[IDX2(idx)] -= get_x_derivative(pressures, idx) / (2*h);
+  y_velocities[IDX2(idx)] -= get_y_derivative(pressures, idx) / (2*h);
+}
+
 void kernel_project_wrapper(float *x_velocities, float *y_velocities, float *pressures, float *divergences) {
+  kernel_project_prepare<<<GRID_DIM, BLOCK_DIM>>>(x_velocities, y_velocities, pressures, divergences);
+  for (int i = 0; i < GAUSS_SEIDEL_ITERATIONS; i++) {
+    kernel_project_solve_red_black<<<GRID_DIM, BLOCK_DIM>>>(x_velocities, y_velocities, pressures, divergences, RED);
+    kernel_project_solve_red_black<<<GRID_DIM, BLOCK_DIM>>>(x_velocities, y_velocities, pressures, divergences, BLACK);
+  }
+  kernel_project_write<<<GRID_DIM, BLOCK_DIM>>>(x_velocities, y_velocities, pressures, divergences);
+}
+
+void kernel_project_test_harness(float *x_velocities, float *y_velocities, float *pressures, float *divergences) {
   float *device_x_velocities, *device_y_velocities, *device_pressure, *device_divergences;
 
   cudaMalloc(&device_x_velocities, sizeof(float)*N);

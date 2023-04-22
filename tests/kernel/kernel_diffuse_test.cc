@@ -25,7 +25,7 @@ TEST(Kernel, Diffuse) {
 
 
   gold_diffuse(gold_previous_values, gold_values, DIFFUSION_RATE);
-  kernel_diffuse_wrapper(previous_values, values, DIFFUSION_RATE);
+  kernel_diffuse_test_harness(previous_values, values, DIFFUSION_RATE);
 
 
   float total_error = 0.0;
