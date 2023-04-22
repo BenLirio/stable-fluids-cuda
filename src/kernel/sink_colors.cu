@@ -3,7 +3,7 @@
 #include <util/compile_options.h>
 #include <util/idx2.cuh>
 
-__global__ void kernel_sink_colors(float *previous_colors, float *colors) {
+__global__ void kernel_sink_colors_single_block(float *previous_colors, float *colors) {
   float alpha = (1-TIME_STEP) + (1-COLOR_SINK_RATE)*TIME_STEP;
   idx2 idx = idx2(
     threadIdx.x + 1,
@@ -12,6 +12,19 @@ __global__ void kernel_sink_colors(float *previous_colors, float *colors) {
   colors[IDX2(idx)] *= alpha;
   previous_colors[IDX2(idx)] *= alpha;
 }
+
+__global__ void kernel_sink_colors_no_optimization(float *previous_colors, float *colors) {
+  float alpha = (1-TIME_STEP) + (1-COLOR_SINK_RATE)*TIME_STEP;
+  idx2 idx = idx2(
+    blockIdx.x*blockDim.x + threadIdx.x + 1,
+    blockIdx.y*blockDim.y + threadIdx.y + 1
+  );
+  if (idx.x > WIDTH || idx.y > HEIGHT) return;
+  colors[IDX2(idx)] *= alpha;
+  previous_colors[IDX2(idx)] *= alpha;
+}
+
+void (*kernel_sink_colors)(float* previous_colors, float* colors) = kernel_sink_colors_no_optimization;
 
 void kernel_sink_colors_wrapper(float *previous_colors, float *colors) {
   float *device_previous_colors;

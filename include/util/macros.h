@@ -10,6 +10,8 @@
 #define MAX_SINGLE_ERROR_THRESHOLD 0.001f
 #define N (WIDTH * HEIGHT)
 
+#define BLOCK_SIZE 32
+
 #define MAX_CONVERGENCE_ITERATIONS 10000
 #define CHECK_CONVERGENCE_EVERY 100
 #define COLOR_SINK_RATE 0.1f
@@ -18,7 +20,7 @@
 #define COLOR_SOURCE_MAGNITUDE 1.0f
 #define VELOCITY_SPIN_RATE 10.0f
 
-#define USE_GOLD                1
+#define USE_GOLD                0
 
 #define USE_SOURCE_COLORS       1
 #define USE_SINK_COLORS         1
@@ -29,6 +31,6 @@
 #define USE_VELOCITY_DIFFUSE    1
 #define USE_VELOCITY_ADVECT     1
 
-#define RANDOMIZE_COLORS        0
+#define RANDOMIZE_COLORS        1
 
 #endif // STABLE_FLUIDS_MACROS_H

@@ -19,36 +19,42 @@ void kernel_step(state_t state, int current_step) {
   state_property_t *p = state.pressures;
   state_property_t *d = state.divergences;
 
+  dim3 block_dims = dim3(BLOCK_SIZE, BLOCK_SIZE);
+  dim3 grid_dims = dim3(
+    (WIDTH + BLOCK_SIZE - 1) / block_dims.x,
+    (HEIGHT + BLOCK_SIZE - 1) / block_dims.y
+  );
+
   if (USE_SOURCE_COLORS)
-    kernel_source_colors<<<1, dim3(WIDTH, HEIGHT)>>>(c->previous, c->current);
+    kernel_source_colors<<<grid_dims, block_dims>>>(c->previous, c->current);
   if (USE_SINK_COLORS)
-    kernel_sink_colors<<<1, dim3(WIDTH, HEIGHT)>>>(c->previous, c->current);
+    kernel_sink_colors<<<grid_dims, block_dims>>>(c->previous, c->current);
   if (USE_DENSITY_DIFFUSE) {
     state_property_step(c);
-    kernel_diffuse<<<1, dim3(WIDTH, HEIGHT)>>>(c->previous, c->current, DIFFUSION_RATE);
+    kernel_diffuse<<<grid_dims, block_dims>>>(c->previous, c->current, DIFFUSION_RATE);
   }
   if (USE_DENSITY_ADVECT) {
     state_property_step(c);
-    kernel_advect<<<1, dim3(WIDTH, HEIGHT)>>>(c->previous, c->current, x->current, y->current);
+    kernel_advect<<<grid_dims, block_dims>>>(c->previous, c->current, x->current, y->current);
   }
 
   if (USE_SOURCE_VELOCITIES)
-    kernel_source_velocities<<<1, dim3(WIDTH, HEIGHT)>>>(x->previous, y->previous, x->current, y->current, current_step);
+    kernel_source_velocities<<<grid_dims, block_dims>>>(x->previous, y->previous, x->current, y->current, current_step);
   if (USE_SINK_VELOCITIES)
-    kernel_sink_velocities<<<1, dim3(WIDTH, HEIGHT)>>>(x->previous, y->previous, x->current, y->current);
+    kernel_sink_velocities<<<grid_dims, block_dims>>>(x->previous, y->previous, x->current, y->current);
   if (USE_VELOCITY_DIFFUSE) {
     state_property_step(x);
-    kernel_diffuse<<<1, dim3(WIDTH, HEIGHT)>>>(x->previous, x->current, VISCOSITY);
+    kernel_diffuse<<<grid_dims, block_dims>>>(x->previous, x->current, VISCOSITY);
     state_property_step(y);
-    kernel_diffuse<<<1, dim3(WIDTH, HEIGHT)>>>(y->previous, y->current, VISCOSITY);
-    kernel_project<<<1, dim3(WIDTH, HEIGHT)>>>(x->current, y->current, p->current, d->current);
+    kernel_diffuse<<<grid_dims, block_dims>>>(y->previous, y->current, VISCOSITY);
+    kernel_project<<<grid_dims, block_dims>>>(x->current, y->current, p->current, d->current);
   }
   if (USE_VELOCITY_ADVECT) {
     state_property_step(x);
     state_property_step(y);
-    kernel_advect<<<1, dim3(WIDTH, HEIGHT)>>>(x->previous, x->current, x->previous, y->previous);
-    kernel_advect<<<1, dim3(WIDTH, HEIGHT)>>>(y->previous, y->current, x->previous, y->previous);
-    kernel_project<<<1, dim3(WIDTH, HEIGHT)>>>(x->current, y->current, p->current, d->current);
+    kernel_advect<<<grid_dims, block_dims>>>(x->previous, x->current, x->previous, y->previous);
+    kernel_advect<<<grid_dims, block_dims>>>(y->previous, y->current, x->previous, y->previous);
+    kernel_project<<<grid_dims, block_dims>>>(x->current, y->current, p->current, d->current);
   }
 }
 

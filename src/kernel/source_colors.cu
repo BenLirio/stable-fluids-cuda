@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-__global__ void kernel_source_colors(float *previous_colors, float *colors) {
+__global__ void kernel_source_colors_single_block(float *previous_colors, float *colors) {
   idx2 idx = idx2(
     threadIdx.x + 1,
     threadIdx.y + 1
@@ -21,6 +21,23 @@ __global__ void kernel_source_colors(float *previous_colors, float *colors) {
   colors[IDX2(idx)] += magnitude*TIME_STEP;
   previous_colors[IDX2(idx)] += magnitude*TIME_STEP;
 }
+
+__global__ void kernel_source_colors_no_optimization(float *previous_colors, float *colors) {
+  idx2 idx = idx2(
+    blockIdx.x*blockDim.x + threadIdx.x + 1,
+    blockIdx.y*blockDim.y + threadIdx.y + 1
+  );
+  if (idx.x > WIDTH || idx.y > HEIGHT)
+    return;
+  vec2 center = vec2((WIDTH/2.0) + 0.5, (HEIGHT/2.0) + 0.5);
+  vec2 position = vec2_of_idx2(idx);
+  float distance = vec2_scaled_dist(center, position);
+  float magnitude = 1.0/(distance*distance);
+  colors[IDX2(idx)] += magnitude*TIME_STEP;
+  previous_colors[IDX2(idx)] += magnitude*TIME_STEP;
+}
+
+void (*kernel_source_colors)(float *previous_colors, float *colors) = kernel_source_colors_no_optimization;
 
 void kernel_source_colors_wrapper(float *previous_colors, float *colors) {
   size_t number_of_bytes = N*sizeof(float);
