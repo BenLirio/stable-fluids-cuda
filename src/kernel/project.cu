@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <cuda_runtime.h>
 
-__constant__ idx2 constant_adjacent_offsets[NUM_NEIGHBORS];
 __global__ void kernel_project(float *x_velocities, float *y_velocities, float *pressures, float *divergences) {
   float h = 1.0f / sqrt((float)N);
   int x = threadIdx.x + 1;
@@ -40,7 +39,6 @@ __global__ void kernel_project(float *x_velocities, float *y_velocities, float *
 }
 
 void kernel_project_wrapper(float *x_velocities, float *y_velocities, float *pressures, float *divergences) {
-  cudaMemcpyToSymbol(constant_adjacent_offsets, adjancent_offsets, sizeof(idx2)*NUM_NEIGHBORS);
   float *device_x_velocities, *device_y_velocities, *device_pressure, *device_divergences;
 
   cudaMalloc(&device_x_velocities, sizeof(float)*N);

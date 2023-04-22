@@ -18,7 +18,7 @@
 #define COLOR_SOURCE_MAGNITUDE 1.0f
 #define VELOCITY_SPIN_RATE 10.0f
 
-#define USE_GOLD                0
+#define USE_GOLD                1
 
 #define USE_SOURCE_COLORS       1
 #define USE_SINK_COLORS         1
@@ -26,8 +26,8 @@
 #define USE_DENSITY_ADVECT      1
 #define USE_SOURCE_VELOCITIES   1
 #define USE_SINK_VELOCITIES     1
-#define USE_VELOCITY_DIFFUSE    0
-#define USE_VELOCITY_ADVECT     0
+#define USE_VELOCITY_DIFFUSE    1
+#define USE_VELOCITY_ADVECT     1
 
 #define RANDOMIZE_COLORS        0
 

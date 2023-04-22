@@ -60,8 +60,10 @@ TEST(Kernel, Project) {
     }
 
     average_error = total_error / (N * num_fields_compared);
+    printf("[%d] Average error: %f, Max error: %f\n", i, average_error, max_error);
     max_error = max_error / num_fields_compared;
     if (average_error < MAX_AVERAGE_ERROR_THRESHOLD) {
+      printf("Converged after %d iterations\n", i+1);
       break;
     }
   }
