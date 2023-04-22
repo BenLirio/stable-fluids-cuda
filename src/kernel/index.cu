@@ -9,106 +9,65 @@
 #include <kernel/source_velocities.cuh>
 #include <kernel/sink_velocities.cuh>
 #include <kernel/sink_colors.cuh>
+#include <util/state.h>
 
-void kernel_step(
-  float *colors,
-  float *previous_colors,
-  float *previous_x_velocities,
-  float *previous_y_velocities,
-  float *x_velocities,
-  float *y_velocities,
-  float *preasures,
-  float *divergences,
-  int current_step
-  ) {
 
-  // kernel_source_colors<<<1, dim3(WIDTH, HEIGHT)>>>(previous_colors, colors);
-  // kernel_sink_colors<<<1, dim3(WIDTH, HEIGHT)>>>(previous_colors, colors);
-  SWAP(previous_colors, colors);
-  kernel_diffuse<<<1, dim3(WIDTH, HEIGHT)>>>(previous_colors, colors, DIFFUSION_RATE);
-  // SWAP(previous_colors, colors);
-  // kernel_advect<<<1, dim3(WIDTH, HEIGHT)>>>(previous_colors, colors, x_velocities, y_velocities);
+void kernel_step(state_t state, int current_step) {
+  state_property_t *c = state.colors;
+  state_property_t *x = state.x_velocities;
+  state_property_t *y = state.y_velocities;
+  state_property_t *p = state.pressures;
+  state_property_t *d = state.divergences;
 
-  // kernel_source_velocities<<<1, dim3(WIDTH, HEIGHT)>>>(previous_x_velocities, previous_y_velocities, x_velocities, y_velocities, current_step);
-  // kernel_sink_velocities<<<1, dim3(WIDTH, HEIGHT)>>>(previous_x_velocities, previous_y_velocities, x_velocities, y_velocities);
-  // SWAP(previous_x_velocities, x_velocities);
-  // kernel_diffuse<<<1, dim3(WIDTH, HEIGHT)>>>(previous_x_velocities, x_velocities, VISCOSITY);
-  // SWAP(previous_y_velocities, y_velocities);
-  // kernel_diffuse<<<1, dim3(WIDTH, HEIGHT)>>>(previous_y_velocities, y_velocities, VISCOSITY);
-  // kernel_project<<<1, dim3(WIDTH, HEIGHT)>>>(x_velocities, y_velocities, preasures, divergences);
+  kernel_source_colors<<<1, dim3(WIDTH, HEIGHT)>>>(c->previous, c->current);
+  kernel_sink_colors<<<1, dim3(WIDTH, HEIGHT)>>>(c->previous, c->current);
+  state_property_step(c);
+  kernel_diffuse<<<1, dim3(WIDTH, HEIGHT)>>>(c->previous, c->current, DIFFUSION_RATE);
+  state_property_step(c);
+  kernel_advect<<<1, dim3(WIDTH, HEIGHT)>>>(c->previous, c->current, x->current, y->current);
 
-  // SWAP(previous_x_velocities, x_velocities);
-  // SWAP(previous_y_velocities, y_velocities);
-  // kernel_advect<<<1, dim3(WIDTH, HEIGHT)>>>(previous_x_velocities, x_velocities, previous_x_velocities, previous_y_velocities);
-  // kernel_advect<<<1, dim3(WIDTH, HEIGHT)>>>(previous_y_velocities, y_velocities, previous_x_velocities, previous_y_velocities);
-  // kernel_project<<<1, dim3(WIDTH, HEIGHT)>>>(x_velocities, y_velocities, preasures, divergences);
+  kernel_source_velocities<<<1, dim3(WIDTH, HEIGHT)>>>(x->previous, y->previous, x->current, y->current, current_step);
+  kernel_sink_velocities<<<1, dim3(WIDTH, HEIGHT)>>>(x->previous, y->previous, x->current, y->current);
+  state_property_step(x);
+  kernel_diffuse<<<1, dim3(WIDTH, HEIGHT)>>>(x->previous, x->current, VISCOSITY);
+  state_property_step(y);
+  kernel_diffuse<<<1, dim3(WIDTH, HEIGHT)>>>(y->previous, y->current, VISCOSITY);
+  kernel_project<<<1, dim3(WIDTH, HEIGHT)>>>(x->current, y->current, p->current, d->current);
+
+  state_property_step(x);
+  state_property_step(y);
+  kernel_advect<<<1, dim3(WIDTH, HEIGHT)>>>(x->previous, x->current, x->previous, y->previous);
+  kernel_advect<<<1, dim3(WIDTH, HEIGHT)>>>(y->previous, y->current, x->previous, y->previous);
+  kernel_project<<<1, dim3(WIDTH, HEIGHT)>>>(x->current, y->current, p->current, d->current);
 }
 
-void kernel_step_wrapper(
-  float *colors,
-  float *previous_colors,
-  float *previous_x_velocities,
-  float *previous_y_velocities,
-  float *x_velocities,
-  float *y_velocities,
-  float *preasures,
-  float *divergences,
-  int current_step
-) {
-  float *device_colors;
-  float *device_previous_colors;
-  float *device_x_velocities;
-  float *device_previous_x_velocities;
-  float *device_y_velocities;
-  float *device_previous_y_velocities;
-  float *device_preasures;
-  float *device_divergences;
+void kernel_step_wrapper(state_t state, int current_step) {
+  state_t device_state;
+  state_cuda_malloc(&device_state);
 
-  cudaMalloc(&device_colors, N*sizeof(float));
-  cudaMalloc(&device_previous_colors, N*sizeof(float));
-  cudaMalloc(&device_x_velocities, N*sizeof(float));
-  cudaMalloc(&device_previous_x_velocities, N*sizeof(float));
-  cudaMalloc(&device_y_velocities, N*sizeof(float));
-  cudaMalloc(&device_previous_y_velocities, N*sizeof(float));
-  cudaMalloc(&device_preasures, N*sizeof(float));
-  cudaMalloc(&device_divergences, N*sizeof(float));
+  cudaMemcpy(device_state.colors->current, state.colors->current, N*sizeof(float), cudaMemcpyHostToDevice);
+  cudaMemcpy(device_state.colors->previous, state.colors->previous, N*sizeof(float), cudaMemcpyHostToDevice);
+  cudaMemcpy(device_state.x_velocities->current, state.x_velocities->current, N*sizeof(float), cudaMemcpyHostToDevice);
+  cudaMemcpy(device_state.x_velocities->previous, state.x_velocities->previous, N*sizeof(float), cudaMemcpyHostToDevice);
+  cudaMemcpy(device_state.y_velocities->current, state.y_velocities->current, N*sizeof(float), cudaMemcpyHostToDevice);
+  cudaMemcpy(device_state.y_velocities->previous, state.y_velocities->previous, N*sizeof(float), cudaMemcpyHostToDevice);
+  cudaMemcpy(device_state.pressures->current, state.pressures->current, N*sizeof(float), cudaMemcpyHostToDevice);
+  cudaMemcpy(device_state.pressures->previous, state.pressures->previous, N*sizeof(float), cudaMemcpyHostToDevice);
+  cudaMemcpy(device_state.divergences->current, state.divergences->current, N*sizeof(float), cudaMemcpyHostToDevice);
+  cudaMemcpy(device_state.divergences->previous, state.divergences->previous, N*sizeof(float), cudaMemcpyHostToDevice);
 
-  cudaMemcpy(device_colors, colors, N*sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(device_previous_colors, previous_colors, N*sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(device_x_velocities, x_velocities, N*sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(device_previous_x_velocities, previous_x_velocities, N*sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(device_y_velocities, y_velocities, N*sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(device_previous_y_velocities, previous_y_velocities, N*sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(device_preasures, preasures, N*sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(device_divergences, divergences, N*sizeof(float), cudaMemcpyHostToDevice);
+  kernel_step(device_state, current_step);
 
-  kernel_step(
-    device_colors,
-    device_previous_colors,
-    device_previous_x_velocities,
-    device_previous_y_velocities,
-    device_x_velocities,
-    device_y_velocities,
-    device_preasures,
-    device_divergences,
-    current_step
-  );
+  cudaMemcpy(state.colors->current, device_state.colors->current, N*sizeof(float), cudaMemcpyDeviceToHost);
+  cudaMemcpy(state.colors->previous, device_state.colors->previous, N*sizeof(float), cudaMemcpyDeviceToHost);
+  cudaMemcpy(state.x_velocities->current, device_state.x_velocities->current, N*sizeof(float), cudaMemcpyDeviceToHost);
+  cudaMemcpy(state.x_velocities->previous, device_state.x_velocities->previous, N*sizeof(float), cudaMemcpyDeviceToHost);
+  cudaMemcpy(state.y_velocities->current, device_state.y_velocities->current, N*sizeof(float), cudaMemcpyDeviceToHost);
+  cudaMemcpy(state.y_velocities->previous, device_state.y_velocities->previous, N*sizeof(float), cudaMemcpyDeviceToHost);
+  cudaMemcpy(state.pressures->current, device_state.pressures->current, N*sizeof(float), cudaMemcpyDeviceToHost);
+  cudaMemcpy(state.pressures->previous, device_state.pressures->previous, N*sizeof(float), cudaMemcpyDeviceToHost);
+  cudaMemcpy(state.divergences->current, device_state.divergences->current, N*sizeof(float), cudaMemcpyDeviceToHost);
+  cudaMemcpy(state.divergences->previous, device_state.divergences->previous, N*sizeof(float), cudaMemcpyDeviceToHost);
 
-  cudaMemcpy(colors, device_colors, N*sizeof(float), cudaMemcpyDeviceToHost);
-  cudaMemcpy(previous_colors, device_previous_colors, N*sizeof(float), cudaMemcpyDeviceToHost);
-  cudaMemcpy(x_velocities, device_x_velocities, N*sizeof(float), cudaMemcpyDeviceToHost);
-  cudaMemcpy(previous_x_velocities, device_previous_x_velocities, N*sizeof(float), cudaMemcpyDeviceToHost);
-  cudaMemcpy(y_velocities, device_y_velocities, N*sizeof(float), cudaMemcpyDeviceToHost);
-  cudaMemcpy(previous_y_velocities, device_previous_y_velocities, N*sizeof(float), cudaMemcpyDeviceToHost);
-  cudaMemcpy(preasures, device_preasures, N*sizeof(float), cudaMemcpyDeviceToHost);
-  cudaMemcpy(divergences, device_divergences, N*sizeof(float), cudaMemcpyDeviceToHost);
-
-  cudaFree(device_colors);
-  cudaFree(device_previous_colors);
-  cudaFree(device_x_velocities);
-  cudaFree(device_previous_x_velocities);
-  cudaFree(device_y_velocities);
-  cudaFree(device_previous_y_velocities);
-  cudaFree(device_preasures);
-  cudaFree(device_divergences);
+  state_cuda_free(device_state);
 }

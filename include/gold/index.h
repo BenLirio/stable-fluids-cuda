@@ -1,16 +1,7 @@
 #ifndef STABLE_FLUIDS_CUDA_GOLD_H
 #define STABLE_FLUIDS_CUDA_GOLD_H
+#include <util/state.h>
 
-void gold_step(
-  float *previous_colors_pointer,
-  float *colors_pointer,
-  float *previous_x_velocities,
-  float *previous_y_velocities,
-  float *x_velocities,
-  float *y_velocities,
-  float *pressures,
-  float *divergences,
-  int current_step
-);
+void gold_step(state_t state, int step);
 
 #endif // STABLE_FLUIDS_CUDA_GOLD_H

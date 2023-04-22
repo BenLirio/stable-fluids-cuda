@@ -18,37 +18,47 @@
 #include <gold/source_velocities.cuh>
 #include <gold/sink_velocities.cuh>
 
-void gold_step(
-  float *previous_colors_pointer,
-  float *colors_pointer,
-  float *previous_x_velocities,
-  float *previous_y_velocities,
-  float *x_velocities,
-  float *y_velocities,
-  float *pressures,
-  float *divergences,
-  int current_step
-) {
+void gold_step(state_t state, int step) {
+  float *c = state.colors->current;
+  float *c0 = state.colors->previous;
+
+  float *x = state.x_velocities->current;
+  float *x0 = state.x_velocities->previous;
+
+  float *y = state.y_velocities->current;
+  float *y0 = state.y_velocities->previous;
+
+  float *p = state.pressures->current;
+  float *d = state.divergences->current;
   // density
-  // gold_source_colors(previous_colors, colors);
-  // gold_sink_colors(previous_colors, colors);
-  SWAP(previous_colors, colors);
-  gold_diffuse(previous_colors, colors, DIFFUSION_RATE);
-  // SWAP(previous_colors, colors);
-  // gold_advect(previous_colors, colors, x_velocities, y_velocities);
+  gold_source_colors(c0, c);
+  gold_sink_colors(c0, c);
+  state_property_step(state.colors);
+  c = state.colors->current;
+  c0 = state.colors->previous;
+  gold_diffuse(c0, c, DIFFUSION_RATE);
+  gold_advect(c0, c, x, y);
 
-  // // velocity
-  // gold_source_velocities(previous_x_velocities, previous_y_velocities, x_velocities, y_velocities, current_step);
-  // gold_sink_velocities(previous_x_velocities, previous_y_velocities, x_velocities, y_velocities);
-  // SWAP(previous_x_velocities, x_velocities);
-  // gold_diffuse(previous_x_velocities, x_velocities, VISCOSITY);
-  // SWAP(previous_y_velocities, y_velocities);
-  // gold_diffuse(previous_y_velocities, y_velocities, VISCOSITY);
-  // gold_project(x_velocities, y_velocities, pressures, divergences);
+  // velocity
+  gold_source_velocities(x0, y0, x, y, step);
+  gold_sink_velocities(x0, y0, x, y);
+  state_property_step(state.x_velocities);
+  x = state.x_velocities->current;
+  x0 = state.x_velocities->previous;
+  gold_diffuse(x0, x, VISCOSITY);
+  state_property_step(state.y_velocities);
+  y = state.y_velocities->current;
+  y0 = state.y_velocities->previous;
+  gold_diffuse(y0, y, VISCOSITY);
+  gold_project(x, y, p, d);
 
-  // SWAP(previous_x_velocities, x_velocities);
-  // SWAP(previous_y_velocities, y_velocities);
-  // gold_advect(previous_x_velocities, x_velocities, previous_x_velocities, previous_y_velocities);
-  // gold_advect(previous_y_velocities, y_velocities, previous_x_velocities, previous_y_velocities);
-  // gold_project(x_velocities, y_velocities, pressures, divergences);
+  state_property_step(state.x_velocities);
+  x = state.x_velocities->current;
+  x0 = state.x_velocities->previous;
+  state_property_step(state.y_velocities);
+  y = state.y_velocities->current;
+  y0 = state.y_velocities->previous;
+  gold_advect(x0, x, x0, y0);
+  gold_advect(y0, y, x0, y0);
+  gold_project(x, y, p, d);
 }
