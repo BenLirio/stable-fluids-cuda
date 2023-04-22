@@ -16,8 +16,8 @@ void gold_source_colors(float *previous_colors, float *colors) {
       vec2 position = vec2_of_idx2(idx);
       float distance = vec2_scaled_dist(center, position);
       float magnitude = 1.0 / (distance * distance);
-      colors[IDX2(idx)] += 0.1;
-      previous_colors[IDX2(idx)] += 0.1;
+      colors[IDX2(idx)] += magnitude*TIME_STEP;
+      previous_colors[IDX2(idx)] += magnitude*TIME_STEP;
     }
   }
 }

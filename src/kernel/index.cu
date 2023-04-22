@@ -5,50 +5,55 @@
 #include <kernel/project.cuh>
 #include <util/macros.h>
 #include <kernel/index.cuh>
+#include <kernel/source_colors.cuh>
+#include <kernel/source_velocities.cuh>
+#include <kernel/sink_velocities.cuh>
+#include <kernel/sink_colors.cuh>
 
 void kernel_step(
-    float *colors,
-    float *previous_colors,
-    float *x_velocities,
-    float *previous_x_velocities,
-    float *y_velocities,
-    float *previous_y_velocities,
-    float *preasures,
-    float *divergences
+  float *colors,
+  float *previous_colors,
+  float *previous_x_velocities,
+  float *previous_y_velocities,
+  float *x_velocities,
+  float *y_velocities,
+  float *preasures,
+  float *divergences,
+  int current_step
   ) {
-  // density
-  // source_colors();
-  // sink_colors();
+
+  // kernel_source_colors<<<1, dim3(WIDTH, HEIGHT)>>>(previous_colors, colors);
+  // kernel_sink_colors<<<1, dim3(WIDTH, HEIGHT)>>>(previous_colors, colors);
   SWAP(previous_colors, colors);
   kernel_diffuse<<<1, dim3(WIDTH, HEIGHT)>>>(previous_colors, colors, DIFFUSION_RATE);
-  SWAP(previous_colors, colors);
-  kernel_advect<<<1, dim3(WIDTH, HEIGHT)>>>(previous_colors, colors, x_velocities, y_velocities);
+  // SWAP(previous_colors, colors);
+  // kernel_advect<<<1, dim3(WIDTH, HEIGHT)>>>(previous_colors, colors, x_velocities, y_velocities);
 
-  // velocity
-  // source_velocity();
-  // sink_velocity();
-  SWAP(previous_x_velocities, x_velocities);
-  kernel_diffuse<<<1, dim3(WIDTH, HEIGHT)>>>(previous_x_velocities, x_velocities, VISCOSITY);
-  SWAP(previous_y_velocities, y_velocities);
-  kernel_diffuse<<<1, dim3(WIDTH, HEIGHT)>>>(previous_y_velocities, y_velocities, VISCOSITY);
-  kernel_project<<<1, dim3(WIDTH, HEIGHT)>>>(previous_x_velocities, previous_y_velocities, preasures, divergences);
+  // kernel_source_velocities<<<1, dim3(WIDTH, HEIGHT)>>>(previous_x_velocities, previous_y_velocities, x_velocities, y_velocities, current_step);
+  // kernel_sink_velocities<<<1, dim3(WIDTH, HEIGHT)>>>(previous_x_velocities, previous_y_velocities, x_velocities, y_velocities);
+  // SWAP(previous_x_velocities, x_velocities);
+  // kernel_diffuse<<<1, dim3(WIDTH, HEIGHT)>>>(previous_x_velocities, x_velocities, VISCOSITY);
+  // SWAP(previous_y_velocities, y_velocities);
+  // kernel_diffuse<<<1, dim3(WIDTH, HEIGHT)>>>(previous_y_velocities, y_velocities, VISCOSITY);
+  // kernel_project<<<1, dim3(WIDTH, HEIGHT)>>>(x_velocities, y_velocities, preasures, divergences);
 
-  SWAP(previous_x_velocities, x_velocities);
-  SWAP(previous_y_velocities, y_velocities);
-  kernel_advect<<<1, dim3(WIDTH, HEIGHT)>>>(previous_x_velocities, x_velocities, previous_x_velocities, previous_y_velocities);
-  kernel_advect<<<1, dim3(WIDTH, HEIGHT)>>>(previous_y_velocities, y_velocities, previous_x_velocities, previous_y_velocities);
-  kernel_project<<<1, dim3(WIDTH, HEIGHT)>>>(previous_x_velocities, previous_y_velocities, preasures, divergences);
+  // SWAP(previous_x_velocities, x_velocities);
+  // SWAP(previous_y_velocities, y_velocities);
+  // kernel_advect<<<1, dim3(WIDTH, HEIGHT)>>>(previous_x_velocities, x_velocities, previous_x_velocities, previous_y_velocities);
+  // kernel_advect<<<1, dim3(WIDTH, HEIGHT)>>>(previous_y_velocities, y_velocities, previous_x_velocities, previous_y_velocities);
+  // kernel_project<<<1, dim3(WIDTH, HEIGHT)>>>(x_velocities, y_velocities, preasures, divergences);
 }
 
 void kernel_step_wrapper(
   float *colors,
   float *previous_colors,
-  float *x_velocities,
   float *previous_x_velocities,
-  float *y_velocities,
   float *previous_y_velocities,
+  float *x_velocities,
+  float *y_velocities,
   float *preasures,
-  float *divergences
+  float *divergences,
+  int current_step
 ) {
   float *device_colors;
   float *device_previous_colors;
@@ -80,12 +85,13 @@ void kernel_step_wrapper(
   kernel_step(
     device_colors,
     device_previous_colors,
-    device_x_velocities,
     device_previous_x_velocities,
-    device_y_velocities,
     device_previous_y_velocities,
+    device_x_velocities,
+    device_y_velocities,
     device_preasures,
-    device_divergences
+    device_divergences,
+    current_step
   );
 
   cudaMemcpy(colors, device_colors, N*sizeof(float), cudaMemcpyDeviceToHost);

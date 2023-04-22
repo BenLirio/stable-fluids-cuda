@@ -29,13 +29,14 @@ TEST(Kernel, Diffuse) {
 
 
   float total_error = 0.0;
+  int number_of_fields_compared = 2;
   for (int i = 0; i < N; i++) {
     total_error += fabs(previous_values[i] - gold_previous_values[i]);
     total_error += fabs(values[i] - gold_values[i]);
   }
 
-  float average_error = total_error/(2*N);
-  EXPECT_NEAR(average_error, 0.0, EQ_THRESHOLD);
+  float average_error = total_error/(number_of_fields_compared*N);
+  EXPECT_LT(average_error, MAX_AVERAGE_ERROR_THRESHOLD);
 
   free(previous_values);
   free(values);

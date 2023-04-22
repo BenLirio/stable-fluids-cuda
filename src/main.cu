@@ -28,7 +28,8 @@ void init() {
   for (int y = 1; y <= HEIGHT; y++) {
     for (int x = 1; x <= WIDTH; x++) {
       idx2 idx = idx2(x, y);
-      colors[IDX2(idx)] = rand()/((float)RAND_MAX);
+      colors[IDX2(idx)] = rand() / (float)RAND_MAX;
+      previous_colors[IDX2(idx)] = colors[IDX2(idx)];
       x_velocities[IDX2(idx)] = 0.0;
       previous_x_velocities[IDX2(idx)] = 0.0;
       y_velocities[IDX2(idx)] = 0.0;
@@ -49,17 +50,29 @@ int main() {
           printf(",");
       }
     }
-    step();
+    gold_step(
+      colors,
+      previous_colors,
+      previous_x_velocities,
+      previous_y_velocities,
+      x_velocities,
+      y_velocities,
+      pressures,
+      divergences,
+      current_step
+    );
     // kernel_step_wrapper(
     //   colors,
     //   previous_colors,
-    //   x_velocities,
     //   previous_x_velocities,
-    //   y_velocities,
     //   previous_y_velocities,
+    //   x_velocities,
+    //   y_velocities,
     //   pressures,
-    //   divergences
+    //   divergences,
+    //   current_step
     // );
+    current_step++;
   }
   return 0;
 }

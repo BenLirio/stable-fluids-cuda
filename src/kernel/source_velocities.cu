@@ -16,13 +16,14 @@ __global__ void kernel_source_velocities(float *previous_x_velocities, float *pr
   float distance = vec2_scaled_dist(center, position);
   float magnitude = 1/(distance*distance);
   float percent_complete = (float)current_step / (float)NUM_STEPS;
-  float x_magnitude = magnitude*cos(percent_complete*M_PI*10.0);
-  float y_magnitude = magnitude*sin(percent_complete*M_PI*10.0);
+  float x_magnitude = magnitude*cos(percent_complete*M_PI*VELOCITY_SINK_RATE);
+  float y_magnitude = magnitude*sin(percent_complete*M_PI*VELOCITY_SINK_RATE);
+  
 
-  x_velocities[IDX2(idx)] += x_magnitude*TIME_STEP;
-  previous_x_velocities[IDX2(idx)] += x_magnitude*TIME_STEP;
-  y_velocities[IDX2(idx)] += y_magnitude*TIME_STEP;
-  previous_y_velocities[IDX2(idx)] += y_magnitude*TIME_STEP;
+  x_velocities[IDX2(idx)] += x_magnitude*TIME_STEP*VELOCITY_SOURCE_MAGNITUDE;
+  previous_x_velocities[IDX2(idx)] += x_magnitude*TIME_STEP*VELOCITY_SOURCE_MAGNITUDE;
+  y_velocities[IDX2(idx)] += y_magnitude*TIME_STEP*VELOCITY_SOURCE_MAGNITUDE;
+  previous_y_velocities[IDX2(idx)] += y_magnitude*TIME_STEP*VELOCITY_SOURCE_MAGNITUDE;
 }
 
 void kernel_source_velocities_wrapper(float *previous_x_velocities, float *previous_y_velocities, float *x_velocities, float *y_velocities, int current_step) {
