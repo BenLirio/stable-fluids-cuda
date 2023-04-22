@@ -15,9 +15,9 @@ void state_property_free(state_property_t property) {
   free(property.current);
   free(property.previous);
 }
-void state_property_cuda_malloc(state_property_t state_property) {
-  cudaMalloc(&state_property.current, N*sizeof(float));
-  cudaMalloc(&state_property.previous, N*sizeof(float));
+void state_property_cuda_malloc(state_property_t *state_property) {
+  cudaMalloc(&state_property->current, N*sizeof(float));
+  cudaMalloc(&state_property->previous, N*sizeof(float));
 }
 void state_property_cuda_free(state_property_t state_property) {
   cudaFree(state_property.current);
@@ -26,8 +26,14 @@ void state_property_cuda_free(state_property_t state_property) {
 
 void state_property_init(state_property_t property) {
   for (int i = 0; i < N; i++) {
-    property.current[i] = 0;
-    property.previous[i] = 0;
+    property.current[i] = 0.0;
+    property.previous[i] = 0.0;
+  }
+}
+void state_property_randomize(state_property_t state_property) {
+  for (int i = 0; i < N; i++) {
+    state_property.current[i] = (float)rand()/(float)RAND_MAX;
+    state_property.previous[i] = (float)rand()/(float)RAND_MAX;
   }
 }
 
@@ -61,11 +67,11 @@ void state_cuda_malloc(state_t *state_pointer) {
   state_pointer->y_velocities = (state_property_t*)malloc(sizeof(state_property_t));
   state_pointer->divergences = (state_property_t*)malloc(sizeof(state_property_t));
   state_pointer->pressures = (state_property_t*)malloc(sizeof(state_property_t));
-  state_property_cuda_malloc(*state_pointer->colors);
-  state_property_cuda_malloc(*state_pointer->x_velocities);
-  state_property_cuda_malloc(*state_pointer->y_velocities);
-  state_property_cuda_malloc(*state_pointer->divergences);
-  state_property_cuda_malloc(*state_pointer->pressures);
+  state_property_cuda_malloc(state_pointer->colors);
+  state_property_cuda_malloc(state_pointer->x_velocities);
+  state_property_cuda_malloc(state_pointer->y_velocities);
+  state_property_cuda_malloc(state_pointer->divergences);
+  state_property_cuda_malloc(state_pointer->pressures);
 }
 void state_cuda_free(state_t state) {
   state_property_cuda_free(*state.colors);
@@ -86,4 +92,6 @@ void state_init(state_t state) {
   state_property_init(*state.y_velocities);
   state_property_init(*state.divergences);
   state_property_init(*state.pressures);
+  if (RANDOMIZE_COLORS)
+    state_property_randomize(*state.colors);
 }

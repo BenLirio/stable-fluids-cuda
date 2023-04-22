@@ -24,11 +24,12 @@ __global__ void kernel_project(float *x_velocities, float *y_velocities, float *
 
   __syncthreads();
   for (int k = 0; k < GAUSS_SEIDEL_ITERATIONS; k++) {
-    float sum = 0;
-    for (int i = 0; i < NUM_NEIGHBORS; i++) {
-      idx2 neighbor_idx = idx2_add(idx, constant_adjacent_offsets[i]);
-      sum += pressures[IDX2(neighbor_idx)];
-    }
+    float sum = (
+      pressures[IDX2(idx2_add(idx, idx2(0, 1)))] +
+      pressures[IDX2(idx2_add(idx, idx2(0, -1)))] +
+      pressures[IDX2(idx2_add(idx, idx2(1, 0)))] +
+      pressures[IDX2(idx2_add(idx, idx2(-1, 0)))]
+    );
     __syncthreads();
     pressures[IDX2(idx)] = (divergences[IDX2(idx)] + sum) / 4;
     __syncthreads();

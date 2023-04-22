@@ -17,12 +17,15 @@ TEST(Kernel, Index) {
   state_init(gold_state);
 
   int current_step = 0;
-  kernel_step(state, current_step);
+
+  kernel_step_wrapper(state, current_step);
   gold_step(gold_state, current_step);
 
   float total_error = 0.0;
   float max_error = 0.0;
   int number_of_comparisons = 3;
+  int x_loc;
+  int y_loc;
 
   for (int i = 0; i < N; i++) {
     float error = 0.0;
@@ -30,6 +33,11 @@ TEST(Kernel, Index) {
     error += fabs(state.x_velocities->current[i] - gold_state.x_velocities->current[i]);
     error += fabs(state.y_velocities->current[i] - gold_state.y_velocities->current[i]);
     total_error += error;
+    if (error > max_error) {
+      x_loc = i % WIDTH;
+      y_loc = i / WIDTH;
+      printf("error %f at (%d, %d)\n", error, x_loc, y_loc);
+    }
     max_error = max_error > error ? max_error : error;
   }
 

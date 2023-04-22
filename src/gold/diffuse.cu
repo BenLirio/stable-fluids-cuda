@@ -11,12 +11,15 @@ void gold_diffuse(float *previous_values, float *values, float rate) {
     for (int y = 1; y <= HEIGHT; y++) {
       for (int x = 1; x <= WIDTH; x++) {
         idx2 idx = idx2(x, y);
-        float sum = 0;
-        for (int i = 0; i < NUM_NEIGHBORS; i++) {
-          idx2 neighbor_idx = idx2_add(idx, adjancent_offsets[i]);
-          sum += values[IDX2(neighbor_idx)];
-        }
-        values[IDX2(idx)] = (previous_values[IDX2(idx)] + factor*sum) / (1 + 4*factor);
+        values[IDX2(idx)] = (
+          previous_values[IDX2(idx)] +
+          factor*(
+            values[IDX2(idx2_add(idx, idx2(1, 0)))] +
+            values[IDX2(idx2_add(idx, idx2(-1, 0)))] +
+            values[IDX2(idx2_add(idx, idx2(0, 1)))] +
+            values[IDX2(idx2_add(idx, idx2(0, -1)))]
+          )
+        ) / (1 + 4*factor);
       }
     }
   }

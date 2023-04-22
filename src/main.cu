@@ -47,8 +47,11 @@ int main() {
           printf(",");
       }
     }
-    // gold_step(state, current_step);
-    kernel_step(state, current_step);
+    if (USE_GOLD) {
+      gold_step(state, current_step);
+    } else {
+      kernel_step_wrapper(state, current_step);
+    }
     current_step++;
   }
   state_free(state);

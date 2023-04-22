@@ -12,7 +12,7 @@ void state_property_free(state_property_t property);
 void state_property_init(state_property_t property);
 void state_property_step(state_property_t *property);
 
-void state_property_cuda_malloc(state_property_t property);
+void state_property_cuda_malloc(state_property_t *property);
 void state_property_cuda_free(state_property_t property);
 
 struct state {

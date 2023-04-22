@@ -4,6 +4,7 @@
 #include <util/idx2.cuh>
 #include <util/compile_options.h>
 #include <util/type_casting.cuh>
+#include <cuda_runtime.h>
 
 __global__ void kernel_source_velocities(float *previous_x_velocities, float *previous_y_velocities, float *x_velocities, float *y_velocities, int current_step) {
   idx2 idx = idx2(
@@ -14,10 +15,10 @@ __global__ void kernel_source_velocities(float *previous_x_velocities, float *pr
   vec2 center = vec2((WIDTH/2.0)+0.5, (HEIGHT/2.0)+0.5);
   vec2 position = vec2_of_idx2(idx);
   float distance = vec2_scaled_dist(center, position);
-  float magnitude = 1/(distance*distance);
+  float magnitude = 1.0/(distance*distance);
   float percent_complete = (float)current_step / (float)NUM_STEPS;
-  float x_magnitude = magnitude*cos(percent_complete*M_PI*VELOCITY_SINK_RATE);
-  float y_magnitude = magnitude*sin(percent_complete*M_PI*VELOCITY_SINK_RATE);
+  float x_magnitude = magnitude*cos(percent_complete*M_PI*VELOCITY_SPIN_RATE);
+  float y_magnitude = magnitude*sin(percent_complete*M_PI*VELOCITY_SPIN_RATE);
   
 
   x_velocities[IDX2(idx)] += x_magnitude*TIME_STEP*VELOCITY_SOURCE_MAGNITUDE;

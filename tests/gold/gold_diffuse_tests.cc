@@ -10,7 +10,6 @@
 #include "math.h"
 #include <stdlib.h>
 
-#define STEPS_UNTIL_STABLE 700
 #define MAX_N_TO_TEST (128*128)
 
 TEST(Diffuse, disperses_evenly) {
@@ -21,30 +20,38 @@ TEST(Diffuse, disperses_evenly) {
   float *previous_color = (float*)malloc(N * sizeof(float));
   float *color = (float*)malloc(N * sizeof(float));
 
-  #pragma omp parallel for
   for (int i = 0; i < N; i++) {
     previous_color[i] = (float)i/(float)N;
     color[i] = (float)i/(float)N;
   }
 
-  for (int i = 0; i < STEPS_UNTIL_STABLE; i++) {
-    SWAP(previous_color, color);
+  float total_error;
+
+  for (int i = 0; i < MAX_CONVERGENCE_ITERATIONS; i++) {
+    float *temp = previous_color;
+    previous_color = color;
+    color = temp;
     gold_diffuse(previous_color, color, DIFFUSION_RATE);
+
+    if (i % CHECK_CONVERGENCE_EVERY != 0) {
+      continue;
+    }
+    float total = 0.0;
+    for (int i = 0; i < N; i++) {
+      total += color[i];
+    }
+    float average = total / (float)N;
+    total_error = 0.0;
+    for (int i = 0; i < N; i++) {
+      total_error += fabs(color[i] - average);
+    }
+    total_error = total_error / (float)N;
+      if (total_error < EQ_THRESHOLD){
+      break;
+    }
   }
 
-  float total = 0.0;
-  #pragma omp parallel for reduction(+:total)
-  for (int i = 0; i < N; i++) {
-    total += color[i];
-  }
-
-  float average = total / (float)N;
-  float total_error = 0.0;
-  for (int i = 0; i < N; i++) {
-    total_error += fabs(color[i] - average);
-  }
-  float average_error = total_error / (float)N;
-  EXPECT_NEAR(average_error, 0.0, EQ_THRESHOLD);
+  EXPECT_LT(total_error, EQ_THRESHOLD);
 
   free(previous_color);
   free(color);
@@ -65,13 +72,12 @@ TEST(Diffuse, zero_sum) {
     original_total += color[i];
   }
 
-  for (int i = 0; i < STEPS_UNTIL_STABLE; i++) {
+  for (int i = 0; i < MAX_CONVERGENCE_ITERATIONS; i++) {
     SWAP(previous_color, color);
     gold_diffuse(previous_color, color, DIFFUSION_RATE);
   }
 
   float total = 0.0;
-  #pragma omp parallel for reduction(+:total)
   for (int i = 0; i < N; i++) {
     total += color[i];
   }

@@ -5,6 +5,9 @@
 #include <util/type_casting.cuh>
 #include <util/macros.h>
 #include <util/compile_options.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 __global__ void kernel_source_colors(float *previous_colors, float *colors) {
   idx2 idx = idx2(
