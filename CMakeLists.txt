@@ -62,7 +62,7 @@ if(NOT DEFINED TIME_STEP)
 endif()
 add_definitions(-DTIME_STEP=${TIME_STEP})
 
-include_directories(include)
 
+include_directories(include)
 add_subdirectory(src)
 add_subdirectory(tests)
