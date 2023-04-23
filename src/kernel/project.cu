@@ -81,7 +81,8 @@ __global__ void kernel_project_prepare(float *x_velocities, float *y_velocities,
   divergences[IDX2(idx)] = -h * (x_velocity_derivative + y_velocity_derivative)/2;
   pressures[IDX2(idx)] = 0.0f;
 }
-__global__ void kernel_project_solve_red_black(float *x_velocities, float *y_velocities, float *pressures, float *divergences, int red) {
+
+__global__ void kernel_project_solve_red_black_naive(float *x_velocities, float *y_velocities, float *pressures, float *divergences, int red) {
   idx2 idx = idx2(
     blockIdx.x*blockDim.x + threadIdx.x + 1,
     blockIdx.y*blockDim.y + threadIdx.y + 1
@@ -95,6 +96,36 @@ __global__ void kernel_project_solve_red_black(float *x_velocities, float *y_vel
       pressures[IDX2(idx2_add(idx, idx2(-1, 0)))]
   )) / 4;
 }
+
+__global__ void kernel_project_solve_red_black_shared(float *x_velocities, float *y_velocities, float *pressures, float *divergences, int red) {
+  __shared__ float shared_pressures[BLOCK_SIZE+2][BLOCK_SIZE+2];
+  idx2 idx = idx2(
+    blockIdx.x*blockDim.x + threadIdx.x + 1,
+    blockIdx.y*blockDim.y + threadIdx.y + 1
+  );
+  int x = threadIdx.x + 1;
+  int y = threadIdx.y + 1;
+  if (idx.x > WIDTH || idx.y > HEIGHT) return;
+
+                        shared_pressures[y+0][x+0] = pressures[IDX2(idx)];
+  if (x == 1)           shared_pressures[y+0][x-1] = pressures[IDX2(idx2_add(idx, idx2(-1, +0)))];
+  if (x == BLOCK_SIZE)  shared_pressures[y+0][x+1] = pressures[IDX2(idx2_add(idx, idx2(+1, +0)))];
+  if (y == 1)           shared_pressures[y-1][x+0] = pressures[IDX2(idx2_add(idx, idx2(+0, -1)))];
+  if (y == BLOCK_SIZE)  shared_pressures[y+1][x+0] = pressures[IDX2(idx2_add(idx, idx2(+0, +1)))];
+
+  if (idx.x % 2 == (idx.y + red) % 2) return;
+  __syncthreads();
+
+  pressures[IDX2(idx)] = (divergences[IDX2(idx)] + (
+    shared_pressures[y+0][x+1] +
+    shared_pressures[y+0][x-1] +
+    shared_pressures[y+1][x+0] +
+    shared_pressures[y-1][x+0]
+  )) / 4;
+}
+
+void (*kernel_project_solve_red_black)(float *x_velocities, float *y_velocities, float *pressures, float *divergences, int red) = kernel_project_solve_red_black_shared;
+
 __global__ void kernel_project_write(float *x_velocities, float *y_velocities, float *pressures, float *divergences) {
   float h = 1.0f / sqrt((float)N);
   idx2 idx = idx2(

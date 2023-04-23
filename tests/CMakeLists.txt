@@ -1,4 +1,3 @@
-
 include(GoogleTest)
 enable_testing()
 

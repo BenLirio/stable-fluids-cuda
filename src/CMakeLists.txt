@@ -4,7 +4,7 @@ add_subdirectory(util)
 add_subdirectory(kernel)
 
 add_executable(${PROJECT_NAME} main.cu)
-target_link_libraries(${PROJECT_NAME} PRIVATE gold util kernel)
+target_link_libraries(${PROJECT_NAME} PRIVATE gold util kernel glfw GLEW::GLEW OpenGL::GL)
 
 # enable_testing()
 # add_executable(${PROJECT_NAME}-gold-diffuse-tests gold_diffuse_tests.cc ${COMMON_SOURCE_FILES})
