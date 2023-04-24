@@ -5,14 +5,12 @@ import pickle
 import re
 from subprocess import run, Popen, PIPE
 from tempfile import TemporaryDirectory
-from sfc import get_config, OUTPUT_PERFORMANCE, build
+from sfc import get_config, OUTPUT_PERFORMANCE, build, USE_SHARED_MEMORY
 from pathlib import Path
-import time
+from uuid import uuid4
+import shutil
 
 tags = [
-  'PERFORMANCE',
-  'CPU',
-  'GPU',
   'TOTAL',
   'ADVECT',
   'DIFFUSE',
@@ -29,9 +27,6 @@ def parse_timing_line(line):
   for tag in tags:
     if f'[{tag}]' in line:
       fields['TAGS'].append(tag)
-
-  if 'PERFORMANCE' not in fields['TAGS']:
-    return []
 
   step_pattern = r'\[step=(\d+)\]'
   step_match = re.search(step_pattern, line)
@@ -68,30 +63,38 @@ def generate_timings(config):
       timing['VALUES']['WIDTH'] = config['WIDTH']
       timing['VALUES']['HEIGHT'] = config['HEIGHT']
       timing['VALUES']['GAUSS_SEIDEL_ITERATIONS'] = config['GAUSS_SEIDEL_ITERATIONS']
-      if config['USE_SHARED_MEMORY']:
+      if config['USE_GOLD']:
+        timing['TAGS'] += ['CPU']
+      else:
+        timing['TAGS'] += ['GPU']
+      if config['KERNEL_FLAGS']&USE_SHARED_MEMORY:
         timing['TAGS'] += ['SHARED_MEMORY']
     return timings
 
 
 output_dir = 'timings'
 if __name__ == '__main__':
-  for path in glob.glob(f'{output_dir}/*.pkl'):
-    os.remove(path)
+  Path(f'{output_dir}/old').mkdir(parents=True, exist_ok=True)
 
-  config = get_config()
+  for path in glob.glob(f'{output_dir}/*.pkl'):
+    uid = uuid4().hex
+    shutil.move(path, f'{output_dir}/old/{uid}.pkl')
+
+  config = get_config(output=OUTPUT_PERFORMANCE)
 
   timings = []
-  for use_shared_memory in [0, 1]:
-    for n in list(np.logspace(5, 10, num=20, base=2, dtype=int)):
-      config['WIDTH'] = n
-      config['HEIGHT'] = n
-      config['OUTPUT'] = OUTPUT_PERFORMANCE
-      config['USE_SHARED_MEMORY'] = use_shared_memory
-      timings += generate_timings(config)
+  # for n in list(np.logspace(5, 10, num=20, base=2, dtype=int)):
+  for use_shared_memory in [True, False]:
+    for n in [1024]:
+      current_config = config.copy()
 
-  Path(output_dir).mkdir(parents=True, exist_ok=True)
-  timestr = time.strftime("%Y%m%d-%H%M%S")
-  with open(f'{output_dir}/timings-{timestr}.pkl', 'wb') as performance_file:
+      if use_shared_memory: current_config['KERNEL_FLAGS'] |= USE_SHARED_MEMORY
+      current_config['WIDTH'] = n
+      current_config['HEIGHT'] = n
+
+      timings += generate_timings(current_config)
+
+  with open(f'{output_dir}/timings.pkl', 'wb') as performance_file:
     pickle.dump(timings, performance_file)
 
   exit(0)

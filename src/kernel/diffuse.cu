@@ -81,17 +81,23 @@ __global__ void kernel_diffuse_red_black_shared(float *previous_values, float *v
   int x = threadIdx.x+1;
   int y = threadIdx.y+1;
 
-                        shared_values[x+0][y+0] = values[IDX2(idx)];
-  if (x == 1)           shared_values[x-1][y+0] = values[IDX2(idx2_add(idx, idx2(-1, +0)))];
-  if (x == BLOCK_SIZE)  shared_values[x+1][y+0] = values[IDX2(idx2_add(idx, idx2(+1, +0)))];
-  if (y == 1)           shared_values[x+0][y-1] = values[IDX2(idx2_add(idx, idx2(+0, -1)))];
-  if (y == BLOCK_SIZE)  shared_values[x+0][y+1] = values[IDX2(idx2_add(idx, idx2(+0, +1)))];
 
-  if (idx.x % 2 == (idx.y+red) % 2) return;
+  float previous_value;
+  if (idx.x % 2 == (idx.y+red) % 2) {
+                          shared_values[x+0][y+0] = values[IDX2(idx)];
+    if (x == 1)           shared_values[x-1][y+0] = values[IDX2(idx2_add(idx, idx2(-1, +0)))];
+    if (x == BLOCK_SIZE)  shared_values[x+1][y+0] = values[IDX2(idx2_add(idx, idx2(+1, +0)))];
+    if (y == 1)           shared_values[x+0][y-1] = values[IDX2(idx2_add(idx, idx2(+0, -1)))];
+    if (y == BLOCK_SIZE)  shared_values[x+0][y+1] = values[IDX2(idx2_add(idx, idx2(+0, +1)))];
+  } else {
+    previous_value = previous_values[IDX2(idx)];
+  }
   __syncthreads();
 
+  if (idx.x % 2 == (idx.y+red) % 2) return;
+
   values[IDX2(idx)] = (
-    previous_values[IDX2(idx)] +
+    previous_value +
     factor*(
       shared_values[x+1][y+0] +
       shared_values[x-1][y+0] +
@@ -102,14 +108,14 @@ __global__ void kernel_diffuse_red_black_shared(float *previous_values, float *v
 }
 
 
-#ifdef USE_SHARED_MEMORY
-void (*kernel_diffuse_red_black)(float *previous_values, float *values, float rate, int red) = kernel_diffuse_red_black_shared;
-#else
-void (*kernel_diffuse_red_black)(float *previous_values, float *values, float rate, int red) = kernel_diffuse_red_black_naive;
-#endif
-
-
 void kernel_diffuse_wrapper(float *previous_values, float *values, float rate) {
+
+  void (*kernel_diffuse_red_black)(float *previous_values, float *values, float rate, int red) = kernel_diffuse_red_black_naive;
+
+  if (KERNEL_FLAGS&USE_SHARED_MEMORY) {
+    kernel_diffuse_red_black = kernel_diffuse_red_black_shared;
+  }
+
   for (int i = 0; i < GAUSS_SEIDEL_ITERATIONS; i++) {
     kernel_diffuse_red_black<<<GRID_DIM, BLOCK_DIM>>>(previous_values, values, rate, RED);
     kernel_diffuse_red_black<<<GRID_DIM, BLOCK_DIM>>>(previous_values, values, rate, BLACK);

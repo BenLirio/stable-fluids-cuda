@@ -34,7 +34,7 @@ set(COMPILE_PARAMETERS
   TIME_STEP
   OUTPUT
   USE_GOLD
-  USE_SHARED_MEMORY
+  KERNEL_FLAGS
 )
 foreach(PARAM IN LISTS COMPILE_PARAMETERS)
   if(NOT DEFINED ${PARAM})
@@ -42,7 +42,6 @@ foreach(PARAM IN LISTS COMPILE_PARAMETERS)
   endif()
   add_definitions(-D${PARAM}=${${PARAM}})
 endforeach()
-
 
 include_directories(include)
 add_subdirectory(src)

@@ -105,17 +105,21 @@ __global__ void kernel_project_solve_red_black_shared(float *x_velocities, float
   int x = threadIdx.x + 1;
   int y = threadIdx.y + 1;
   if (idx.x > WIDTH || idx.y > HEIGHT) return;
+  float divergence;
 
-                        shared_pressures[y+0][x+0] = pressures[IDX2(idx)];
-  if (x == 1)           shared_pressures[y+0][x-1] = pressures[IDX2(idx2_add(idx, idx2(-1, +0)))];
-  if (x == BLOCK_SIZE)  shared_pressures[y+0][x+1] = pressures[IDX2(idx2_add(idx, idx2(+1, +0)))];
-  if (y == 1)           shared_pressures[y-1][x+0] = pressures[IDX2(idx2_add(idx, idx2(+0, -1)))];
-  if (y == BLOCK_SIZE)  shared_pressures[y+1][x+0] = pressures[IDX2(idx2_add(idx, idx2(+0, +1)))];
+  if (idx.x % 2 == (idx.y + red) % 2) {
+                          shared_pressures[y+0][x+0] = pressures[IDX2(idx)];
+    if (x == 1)           shared_pressures[y+0][x-1] = pressures[IDX2(idx2_add(idx, idx2(-1, +0)))];
+    if (x == BLOCK_SIZE)  shared_pressures[y+0][x+1] = pressures[IDX2(idx2_add(idx, idx2(+1, +0)))];
+    if (y == 1)           shared_pressures[y-1][x+0] = pressures[IDX2(idx2_add(idx, idx2(+0, -1)))];
+    if (y == BLOCK_SIZE)  shared_pressures[y+1][x+0] = pressures[IDX2(idx2_add(idx, idx2(+0, +1)))];
+    return;
+  } else {
+    divergence = divergences[IDX2(idx)];
+  }
 
-  if (idx.x % 2 == (idx.y + red) % 2) return;
   __syncthreads();
-
-  pressures[IDX2(idx)] = (divergences[IDX2(idx)] + (
+  pressures[IDX2(idx)] = (divergence + (
     shared_pressures[y+0][x+1] +
     shared_pressures[y+0][x-1] +
     shared_pressures[y+1][x+0] +
@@ -123,12 +127,6 @@ __global__ void kernel_project_solve_red_black_shared(float *x_velocities, float
   )) / 4;
 }
 
-
-#ifdef USE_SHARED_MEMORY
-void (*kernel_project_solve_red_black)(float *x_velocities, float *y_velocities, float *pressures, float *divergences, int red) = kernel_project_solve_red_black_shared;
-#else
-void (*kernel_project_solve_red_black)(float *x_velocities, float *y_velocities, float *pressures, float *divergences, int red) = kernel_project_solve_red_black_naive;
-#endif
 
 __global__ void kernel_project_write(float *x_velocities, float *y_velocities, float *pressures, float *divergences) {
   float h = 1.0f / sqrt((float)N);
@@ -141,6 +139,13 @@ __global__ void kernel_project_write(float *x_velocities, float *y_velocities, f
 }
 
 void kernel_project_wrapper(float *x_velocities, float *y_velocities, float *pressures, float *divergences) {
+
+  void (*kernel_project_solve_red_black)(float *x_velocities, float *y_velocities, float *pressures, float *divergences, int red) = kernel_project_solve_red_black_naive;
+
+  if (KERNEL_FLAGS&USE_SHARED_MEMORY) {
+    kernel_project_solve_red_black = kernel_project_solve_red_black_shared;
+  }
+
   kernel_project_prepare<<<GRID_DIM, BLOCK_DIM>>>(x_velocities, y_velocities, pressures, divergences);
   for (int i = 0; i < GAUSS_SEIDEL_ITERATIONS; i++) {
     kernel_project_solve_red_black<<<GRID_DIM, BLOCK_DIM>>>(x_velocities, y_velocities, pressures, divergences, RED);

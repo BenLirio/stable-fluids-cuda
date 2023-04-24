@@ -1,7 +1,6 @@
 import glob
 import os
 from subprocess import run, Popen, PIPE
-from random import choice
 import sys
 from tempfile import TemporaryDirectory
 from pathlib import Path
@@ -37,8 +36,7 @@ def generate_gif(config):
 if __name__ == '__main__':
   for path in glob.glob('gifs/*.gif'):
     os.remove(path)
-  config = get_config()
-  config['OUTPUT'] = OUTPUT_GIF
+  config = get_config(output=OUTPUT_GIF)
   generate_gif(config)
   exit(0)
 

@@ -39,10 +39,9 @@
 #define USE_GOLD 0
 #endif
 
-#ifndef USE_SHARED_MEMORY
-#define USE_SHARED_MEMORY 1
+#ifndef KERNEL_FLAGS
+#define KERNEL_FLAGS 0
 #endif
-
 
 #define SWAP(x0, x) {float *tmp = x0; x0 = x; x = tmp;}
 #define NUM_NEIGHBORS 4
@@ -60,9 +59,14 @@
 #define RED 0
 #define BLACK 1
 
+// OUTPUT FLAGS
 #define OUTPUT_PERFORMANCE (1<<0)
 #define OUTPUT_GIF (1<<1)
 
+// KERNEL FLAGS
+#define USE_SHARED_MEMORY (1<<0)
+
+// TAGS
 #define MILLIS_PER_SECOND 1000
 #define PERFORMANCE_TAG (1<<0)
 #define PERFORMANCE_TAG_STRING "[PERFORMANCE]"
@@ -100,6 +104,6 @@
 #define USE_VELOCITY_DIFFUSE    1
 #define USE_VELOCITY_ADVECT     1
 
-#define RANDOMIZE_COLORS        1
+#define RANDOMIZE_COLORS        0
 
 #endif // STABLE_FLUIDS_MACROS_H

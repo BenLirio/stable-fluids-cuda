@@ -31,73 +31,64 @@ void kernel_step(state_t state, int current_step) {
 
   if (USE_SOURCE_COLORS)
     kernel_source_colors<<<grid_dims, block_dims>>>(c->previous, c->current);
+
   if (USE_SINK_COLORS)
     kernel_sink_colors<<<grid_dims, block_dims>>>(c->previous, c->current);
+
   if (USE_DENSITY_DIFFUSE) {
     state_property_step(c);
     performance_start_cuda_event(performance_ptr);
     kernel_diffuse_wrapper(c->previous, c->current, DIFFUSION_RATE);
-    performance_record_cuda_event(performance_ptr, current_step,
-      PERFORMANCE_TAG|GPU_TAG|DIFFUSE_TAG|COLOR_TAG
-    );
+    performance_record_cuda_event(performance_ptr, current_step, DIFFUSE_TAG|COLOR_TAG);
   }
+
   if (USE_DENSITY_ADVECT) {
     state_property_step(c);
     performance_start_cuda_event(performance_ptr);
     kernel_advect<<<grid_dims, block_dims>>>(c->previous, c->current, x->current, y->current);
-    performance_record_cuda_event(performance_ptr, current_step,
-      PERFORMANCE_TAG|GPU_TAG|ADVECT_TAG|COLOR_TAG
-    );
+    performance_record_cuda_event(performance_ptr, current_step, ADVECT_TAG|COLOR_TAG);
   }
 
   if (USE_SOURCE_VELOCITIES)
     kernel_source_velocities<<<grid_dims, block_dims>>>(x->previous, y->previous, x->current, y->current, current_step);
+
   if (USE_SINK_VELOCITIES)
     kernel_sink_velocities<<<grid_dims, block_dims>>>(x->previous, y->previous, x->current, y->current);
+
   if (USE_VELOCITY_DIFFUSE) {
 
     state_property_step(x);
     performance_start_cuda_event(performance_ptr);
     kernel_diffuse_wrapper(x->previous, x->current, VISCOSITY);
-    performance_record_cuda_event(performance_ptr, current_step,
-      PERFORMANCE_TAG|GPU_TAG|DIFFUSE_TAG|VELOCITY_TAG
-    );
+    performance_record_cuda_event(performance_ptr, current_step, DIFFUSE_TAG|VELOCITY_TAG);
 
     state_property_step(y);
     performance_start_cuda_event(performance_ptr);
     kernel_diffuse_wrapper(y->previous, y->current, VISCOSITY);
-    performance_record_cuda_event(performance_ptr, current_step,
-      PERFORMANCE_TAG|GPU_TAG|DIFFUSE_TAG|VELOCITY_TAG
-    );
+    performance_record_cuda_event(performance_ptr, current_step, DIFFUSE_TAG|VELOCITY_TAG);
 
     performance_start_cuda_event(performance_ptr);
     kernel_project_wrapper(x->current, y->current, p->current, d->current);
-    performance_record_cuda_event(performance_ptr, current_step,
-      PERFORMANCE_TAG|GPU_TAG|PROJECT_TAG
-    );
+    performance_record_cuda_event(performance_ptr, current_step, PROJECT_TAG);
   }
+
   if (USE_VELOCITY_ADVECT) {
     state_property_step(x);
     state_property_step(y);
 
     performance_start_cuda_event(performance_ptr);
     kernel_advect<<<grid_dims, block_dims>>>(x->previous, x->current, x->previous, y->previous);
-    performance_record_cuda_event(performance_ptr, current_step,
-      PERFORMANCE_TAG|GPU_TAG|ADVECT_TAG|VELOCITY_TAG
-    );
+    performance_record_cuda_event(performance_ptr, current_step, ADVECT_TAG|VELOCITY_TAG);
 
     performance_start_cuda_event(performance_ptr);
     kernel_advect<<<grid_dims, block_dims>>>(y->previous, y->current, x->previous, y->previous);
-    performance_record_cuda_event(performance_ptr, current_step,
-      PERFORMANCE_TAG|GPU_TAG|ADVECT_TAG|VELOCITY_TAG
-    );
+    performance_record_cuda_event(performance_ptr, current_step, ADVECT_TAG|VELOCITY_TAG);
 
     performance_start_cuda_event(performance_ptr);
     kernel_project_wrapper(x->current, y->current, p->current, d->current);
-    performance_record_cuda_event(performance_ptr, current_step,
-      PERFORMANCE_TAG|GPU_TAG|PROJECT_TAG
-    );
+    performance_record_cuda_event(performance_ptr, current_step, PROJECT_TAG);
   }
+
   performance_free(performance_ptr);
 }
 
