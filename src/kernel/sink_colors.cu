@@ -1,6 +1,5 @@
 #include <kernel/sink_colors.cuh>
 #include <util/macros.h>
-#include <util/compile_options.h>
 #include <util/idx2.cuh>
 
 __global__ void kernel_sink_colors_single_block(float *previous_colors, float *colors) {

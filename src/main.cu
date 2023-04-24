@@ -1,15 +1,13 @@
 #include <gold/index.h>
-#include <util/compile_options.h>
+
 #include <util/macros.h>
 #include <util/state.h>
 #include <util/idx2.cuh>
 #include <stdio.h>
 #include <util/vec2.cuh>
 #include <kernel/index.cuh>
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
 
-void output_color(float *colors, int i) {
+void output_gif_frame(float *colors, int i) {
   if (i != 0)
     printf(",");
   for (int y = 0; y < HEIGHT; y++) {
@@ -40,28 +38,34 @@ void run_with_kernel(state_t state) {
   float *colors = (float*)malloc(N*sizeof(float));
   for (int step = 0; step < NUM_STEPS; step++) {
     kernel_step(device_state, step);
-    cudaMemcpy(colors, device_state.colors->current, N*sizeof(float), cudaMemcpyDeviceToHost);
-    output_color(colors, step);
+    if (OUTPUT&OUTPUT_GIF) {
+      cudaMemcpy(colors, device_state.colors->current, N*sizeof(float), cudaMemcpyDeviceToHost);
+      output_gif_frame(colors, step);
+    }
   }
   free(colors);
 
   state_cuda_free(device_state);
 }
 
+void run_with_gold(state_t state) {
+  for (int step = 0; step < NUM_STEPS; step++) {
+    gold_step(state, step);
+    if (OUTPUT&OUTPUT_GIF)
+      output_gif_frame(state.colors->current, step);
+  }
+}
+
 int main() {
-  int current_step = 0;
   state_t state;
   state_malloc(&state);
   state_init(state);
 
-  run_with_kernel(state);
-
-  // void (*step)(state_t, int) = USE_GOLD ? gold_step : kernel_step_wrapper;
-  // for (int i = 0; i < NUM_STEPS; i++) {
-  //   output_color(state.colors->current, current_step);
-  //   gold_step(state, current_step);
-  //   current_step++;
-  // }
+  if (USE_GOLD) {
+    run_with_gold(state);
+  } else {
+    run_with_kernel(state);
+  }
 
   state_free(state);
   return 0;

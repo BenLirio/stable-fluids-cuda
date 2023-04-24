@@ -5,7 +5,7 @@
 
 #include <util/macros.h>
 #include <cuda_runtime.h>
-#include <util/compile_options.h>
+
 #include <math.h>
 
 TEST(Kernel, Advect) {

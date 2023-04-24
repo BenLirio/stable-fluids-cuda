@@ -1,7 +1,7 @@
 #include <kernel/sink_velocities.cuh>
 #include <util/macros.h>
 #include <util/idx2.cuh>
-#include <util/compile_options.h>
+
 
 __global__ void kernel_sink_velocities_single_block(float *previous_x_velocities, float *previous_y_velocities, float *x_velocities, float *y_velocities) {
   float alpha = (1-TIME_STEP) + (1-VELOCITY_SINK_RATE)*TIME_STEP;

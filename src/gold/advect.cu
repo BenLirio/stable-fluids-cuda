@@ -1,6 +1,6 @@
 #include <gold/advect.h>
 #include <util/macros.h>
-#include <util/compile_options.h>
+
 #include <util/vec2.cuh>
 #include <util/idx2.cuh>
 #include <util/type_casting.cuh>

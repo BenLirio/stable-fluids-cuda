@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <util/compile_options.h>
+
 #include <util/macros.h>
 #include <kernel/source_colors.cuh>
 #include <gold/source_colors.cuh>

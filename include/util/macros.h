@@ -1,6 +1,48 @@
 #ifndef STABLE_FLUIDS_MACROS_H
-#include <cuda_runtime.h>
 #define STABLE_FLUIDS_MACROS_H
+
+#include <cuda_runtime.h>
+
+#ifndef NUM_STEPS
+#define NUM_STEPS 120
+#endif
+
+#ifndef WIDTH
+#define WIDTH 64
+#endif
+
+#ifndef HEIGHT
+#define HEIGHT 64
+#endif
+
+#ifndef DIFFUSION_RATE
+#define DIFFUSION_RATE 0.01f
+#endif
+
+#ifndef VISCOSITY
+#define VISCOSITY 0.0001f
+#endif
+
+#ifndef GAUSS_SEIDEL_ITERATIONS
+#define GAUSS_SEIDEL_ITERATIONS 20
+#endif
+
+#ifndef TIME_STEP
+#define TIME_STEP 0.01f
+#endif
+
+#ifndef OUTPUT
+#define OUTPUT OUTPUT_PERFORMANCE
+#endif
+
+#ifndef USE_GOLD
+#define USE_GOLD 0
+#endif
+
+#ifndef USE_SHARED_MEMORY
+#define USE_SHARED_MEMORY 1
+#endif
+
 
 #define SWAP(x0, x) {float *tmp = x0; x0 = x; x = tmp;}
 #define NUM_NEIGHBORS 4
@@ -18,8 +60,10 @@
 #define RED 0
 #define BLACK 1
 
+#define OUTPUT_PERFORMANCE (1<<0)
+#define OUTPUT_GIF (1<<1)
+
 #define MILLIS_PER_SECOND 1000
-#define OUTPUT_PERFORMANCE 0
 #define PERFORMANCE_TAG (1<<0)
 #define PERFORMANCE_TAG_STRING "[PERFORMANCE]"
 #define CPU_TAG (1<<1)
@@ -46,8 +90,6 @@
 #define VELOCITY_SOURCE_MAGNITUDE 10.0f
 #define COLOR_SOURCE_MAGNITUDE 1.0f
 #define VELOCITY_SPIN_RATE 10.0f
-
-#define USE_GOLD                0
 
 #define USE_SOURCE_COLORS       1
 #define USE_SINK_COLORS         1

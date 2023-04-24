@@ -1,5 +1,5 @@
 #include <gold/sink_colors.cuh>
-#include <util/compile_options.h>
+
 #include <util/idx2.cuh>
 #include <util/vec2.cuh>
 #include <util/macros.h>

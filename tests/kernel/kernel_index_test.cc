@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <util/macros.h>
-#include <util/compile_options.h>
+
 #include <gold/index.h>
 #include <kernel/index.cuh>
 #include <math.h>

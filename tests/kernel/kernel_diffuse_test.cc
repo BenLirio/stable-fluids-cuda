@@ -3,7 +3,7 @@
 #include <kernel/diffuse.cuh>
 #include <util/macros.h>
 #include <cuda_runtime.h>
-#include <util/compile_options.h>
+
 #include <math.h>
 
 TEST(Kernel, Diffuse) {

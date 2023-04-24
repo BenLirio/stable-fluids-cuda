@@ -1,6 +1,6 @@
 #include <gold/index.h>
 #include <util/macros.h>
-#include <util/compile_options.h>
+
 #include <gold/advect.h>
 #include <gold/diffuse.h>
 #include <gold/project.h>

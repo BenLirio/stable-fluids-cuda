@@ -1,5 +1,5 @@
 #include <gold/project.h>
-#include <util/compile_options.h>
+
 #include <util/macros.h>
 #include <util/idx2.cuh>
 #include <util/vec2.cuh>

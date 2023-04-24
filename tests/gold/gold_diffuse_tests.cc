@@ -3,7 +3,7 @@
 #include <util/idx2.cuh>
 #include <util/vec2.cuh>
 #include <gold/index.h>
-#include <util/compile_options.h>
+
 #include <math.h>
 #include <util/macros.h>
 #include <gold/diffuse.h>

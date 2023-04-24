@@ -1,13 +1,13 @@
 import glob
+import numpy as np
 import os
 import pickle
 import re
 from subprocess import run, Popen, PIPE
 from tempfile import TemporaryDirectory
-from sfc import get_config, cmake
+from sfc import get_config, OUTPUT_PERFORMANCE, build
 from pathlib import Path
-
-current_uid = 0
+import time
 
 tags = [
   'PERFORMANCE',
@@ -56,35 +56,20 @@ def parse_timings(performance_output):
   return performance_data
 
 
-def generate_performance(config):
-  global current_uid
-  current_uid += 1
+def generate_timings(config):
   with TemporaryDirectory() as build_dir:
-    cmake(config, build_dir)
-    run([
-      'make',
-      '-C',
-      build_dir,
-      'performance_cpu_test',
-      'performance_kernel_test',
-    ])
-
-    cpu_test_process  = run([
-      f'{build_dir}/tests/performance_cpu_test',
-      '--verbose'
-    ], capture_output=True, text=True)
-    kernel_test_process = run([
-      f'{build_dir}/tests/performance_kernel_test',
-      '--verbose'
+    build(config, build_dir)
+    stable_fluids_process = run([
+      f'{build_dir}/src/stable-fluids-cuda',
     ], capture_output=True, text=True)
 
-    test_output = '\n'.join([cpu_test_process.stdout, kernel_test_process.stdout])
-    timings = parse_timings(test_output)
+    timings = parse_timings(stable_fluids_process.stdout)
     for timing in timings:
       timing['VALUES']['WIDTH'] = config['WIDTH']
       timing['VALUES']['HEIGHT'] = config['HEIGHT']
       timing['VALUES']['GAUSS_SEIDEL_ITERATIONS'] = config['GAUSS_SEIDEL_ITERATIONS']
-      timing['VALUES']['UID'] = current_uid
+      if config['USE_SHARED_MEMORY']:
+        timing['TAGS'] += ['SHARED_MEMORY']
     return timings
 
 
@@ -93,9 +78,20 @@ if __name__ == '__main__':
   for path in glob.glob(f'{output_dir}/*.pkl'):
     os.remove(path)
 
-  timings = generate_performance(get_config())
+  config = get_config()
+
+  timings = []
+  for use_shared_memory in [0, 1]:
+    for n in list(np.logspace(5, 10, num=20, base=2, dtype=int)):
+      config['WIDTH'] = n
+      config['HEIGHT'] = n
+      config['OUTPUT'] = OUTPUT_PERFORMANCE
+      config['USE_SHARED_MEMORY'] = use_shared_memory
+      timings += generate_timings(config)
+
   Path(output_dir).mkdir(parents=True, exist_ok=True)
-  with open(f'{output_dir}/timings.pkl', 'wb') as performance_file:
+  timestr = time.strftime("%Y%m%d-%H%M%S")
+  with open(f'{output_dir}/timings-{timestr}.pkl', 'wb') as performance_file:
     pickle.dump(timings, performance_file)
 
   exit(0)

@@ -2,7 +2,7 @@
 #include <util/vec2.cuh>
 #include <util/macros.h>
 #include <util/idx2.cuh>
-#include <util/compile_options.h>
+
 #include <util/type_casting.cuh>
 #include <cuda_runtime.h>
 

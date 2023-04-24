@@ -1,6 +1,5 @@
 #include <kernel/advect.cuh>
 #include <util/macros.h>
-#include <util/compile_options.h>
 #include <util/vec2.cuh>
 #include <util/idx2.cuh>
 #include <util/type_casting.cuh>
@@ -124,7 +123,12 @@ __global__ void kernel_project_solve_red_black_shared(float *x_velocities, float
   )) / 4;
 }
 
+
+#ifdef USE_SHARED_MEMORY
 void (*kernel_project_solve_red_black)(float *x_velocities, float *y_velocities, float *pressures, float *divergences, int red) = kernel_project_solve_red_black_shared;
+#else
+void (*kernel_project_solve_red_black)(float *x_velocities, float *y_velocities, float *pressures, float *divergences, int red) = kernel_project_solve_red_black_naive;
+#endif
 
 __global__ void kernel_project_write(float *x_velocities, float *y_velocities, float *pressures, float *divergences) {
   float h = 1.0f / sqrt((float)N);

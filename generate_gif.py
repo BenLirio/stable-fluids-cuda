@@ -5,20 +5,14 @@ from random import choice
 import sys
 from tempfile import TemporaryDirectory
 from pathlib import Path
-from sfc import config_to_string, get_config, cmake
+from sfc import config_to_string, get_config, build, OUTPUT_GIF
 
 VIZ_PATH = '/usr/bin/viz'
 ANIMATION_DURATION_SECONDS = 6
 
 def generate_gif(config):
   with TemporaryDirectory() as build_dir:
-    cmake(config, build_dir)
-    run([
-      'make',
-      '-C',
-      build_dir,
-      'stable-fluids-cuda'
-    ])
+    build(config, build_dir)
 
     stable_fluids_process = Popen([
       f'{build_dir}/src/stable-fluids-cuda',
@@ -43,7 +37,9 @@ def generate_gif(config):
 if __name__ == '__main__':
   for path in glob.glob('gifs/*.gif'):
     os.remove(path)
-  generate_gif(get_config())
+  config = get_config()
+  config['OUTPUT'] = OUTPUT_GIF
+  generate_gif(config)
   exit(0)
 
   # for i in range(NUM_VARIATIONS):

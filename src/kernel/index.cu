@@ -1,5 +1,4 @@
 #include <cuda_runtime.h>
-#include <util/compile_options.h>
 #include <kernel/diffuse.cuh>
 #include <kernel/advect.cuh>
 #include <kernel/project.cuh>

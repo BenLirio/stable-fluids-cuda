@@ -1,4 +1,3 @@
-#include <util/compile_options.h>
 #include <util/macros.h>
 #include <stdio.h>
 #include <util/idx2.cuh>
@@ -102,40 +101,13 @@ __global__ void kernel_diffuse_red_black_shared(float *previous_values, float *v
   ) / (1 + 4*factor);
 }
 
-__global__ void kernel_diffuse_red_black_shared_and_neighbor_map(float *previous_values, float *values, float rate, int red) {
-  float factor = TIME_STEP*rate*N;
-  __shared__ float shared_values[BLOCK_SIZE+2][BLOCK_SIZE+2];
 
-  idx2 idx = idx2(
-    blockIdx.x*blockDim.x + threadIdx.x + 1,
-    blockIdx.y*blockDim.y + threadIdx.y + 1
-  );
-  if (idx.x > WIDTH || idx.y > HEIGHT) return;
-
-  int x = threadIdx.x+1;
-  int y = threadIdx.y+1;
-
-                        shared_values[x+0][y+0] = values[IDX2(idx)];
-  if (x == 1)           shared_values[x-1][y+0] = values[IDX2(idx2_add(idx, idx2(-1, +0)))];
-  if (x == BLOCK_SIZE)  shared_values[x+1][y+0] = values[IDX2(idx2_add(idx, idx2(+1, +0)))];
-  if (y == 1)           shared_values[x+0][y-1] = values[IDX2(idx2_add(idx, idx2(+0, -1)))];
-  if (y == BLOCK_SIZE)  shared_values[x+0][y+1] = values[IDX2(idx2_add(idx, idx2(+0, +1)))];
-
-  if (idx.x % 2 == (idx.y+red) % 2) return;
-  __syncthreads();
-
-  values[IDX2(idx)] = (
-    previous_values[IDX2(idx)] +
-    factor*(
-      shared_values[x+1][y+0] +
-      shared_values[x-1][y+0] +
-      shared_values[x+0][y+1] +
-      shared_values[x+0][y-1]
-    )
-  ) / (1 + 4*factor);
-}
-
+#ifdef USE_SHARED_MEMORY
 void (*kernel_diffuse_red_black)(float *previous_values, float *values, float rate, int red) = kernel_diffuse_red_black_shared;
+#else
+void (*kernel_diffuse_red_black)(float *previous_values, float *values, float rate, int red) = kernel_diffuse_red_black_naive;
+#endif
+
 
 void kernel_diffuse_wrapper(float *previous_values, float *values, float rate) {
   for (int i = 0; i < GAUSS_SEIDEL_ITERATIONS; i++) {
