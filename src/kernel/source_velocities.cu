@@ -37,9 +37,8 @@ __global__ void kernel_source_velocities_no_optimization(float *previous_x_veloc
   vec2 position = vec2_of_idx2(idx);
   float distance = vec2_scaled_dist(center, position);
   float magnitude = 1.0/(distance*distance);
-  float percent_complete = (float)current_step / (float)NUM_STEPS;
-  float x_magnitude = magnitude*cos(percent_complete*M_PI*VELOCITY_SPIN_RATE);
-  float y_magnitude = magnitude*sin(percent_complete*M_PI*VELOCITY_SPIN_RATE);
+  float x_magnitude = magnitude*cos(current_step*TIME_STEP*M_PI*VELOCITY_SPIN_RATE);
+  float y_magnitude = magnitude*sin(current_step*TIME_STEP*M_PI*VELOCITY_SPIN_RATE);
   
 
   x_velocities[IDX2(idx)] += x_magnitude*TIME_STEP*VELOCITY_SOURCE_MAGNITUDE;

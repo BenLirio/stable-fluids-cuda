@@ -9,7 +9,10 @@ OUTPUT_PERFORMANCE = 1<<0
 OUTPUT_GIF = 1<<1
 
 # KERNEL_FLAGS
+USE_NAIVE = 0
 USE_SHARED_MEMORY = 1<<0
+USE_THREAD_COARSENING = 1<<1
+USE_ROW_COARSENING = 1<<2
 
 NUM_VARIATIONS = 8
 NUM_SAMPLES = 100
@@ -60,6 +63,8 @@ def get_config(output):
   parser.add_argument('--time-step', type=float, default=choice(TIME_STEP_VARIATIONS))
   parser.add_argument('--use-gold', action='store_true')
   parser.add_argument('--use-shared-memory', action='store_true')
+  parser.add_argument('--use-thread-coarsening', action='store_true')
+  parser.add_argument('--use-row-coarsening', action='store_true')
 
   args = parser.parse_args()
   config = {
@@ -75,5 +80,7 @@ def get_config(output):
     'KERNEL_FLAGS': 0
   }
   if args.use_shared_memory: config['KERNEL_FLAGS'] |= USE_SHARED_MEMORY
+  if args.use_thread_coarsening: config['KERNEL_FLAGS'] |= USE_THREAD_COARSENING
+  if args.use_row_coarsening: config['KERNEL_FLAGS'] |= USE_ROW_COARSENING
 
   return config

@@ -5,7 +5,7 @@ import pickle
 import re
 from subprocess import run, Popen, PIPE
 from tempfile import TemporaryDirectory
-from sfc import get_config, OUTPUT_PERFORMANCE, build, USE_SHARED_MEMORY
+from sfc import get_config, OUTPUT_PERFORMANCE, build, USE_SHARED_MEMORY, USE_THREAD_COARSENING, USE_NAIVE, USE_ROW_COARSENING
 from pathlib import Path
 from uuid import uuid4
 import shutil
@@ -67,8 +67,9 @@ def generate_timings(config):
         timing['TAGS'] += ['CPU']
       else:
         timing['TAGS'] += ['GPU']
-      if config['KERNEL_FLAGS']&USE_SHARED_MEMORY:
-        timing['TAGS'] += ['SHARED_MEMORY']
+      if config['KERNEL_FLAGS']&USE_SHARED_MEMORY:      timing['TAGS'] += ['SHARED_MEMORY']
+      if config['KERNEL_FLAGS']&USE_THREAD_COARSENING:  timing['TAGS'] += ['THREAD_COARSENING']
+      if config['KERNEL_FLAGS']&USE_ROW_COARSENING:     timing['TAGS'] += ['ROW_COARSENING']
     return timings
 
 
@@ -83,14 +84,17 @@ if __name__ == '__main__':
   config = get_config(output=OUTPUT_PERFORMANCE)
 
   timings = []
-  # for n in list(np.logspace(5, 10, num=20, base=2, dtype=int)):
-  for use_shared_memory in [True, False]:
-    for n in [1024]:
+
+  for feature in [USE_NAIVE, USE_SHARED_MEMORY, USE_THREAD_COARSENING, USE_ROW_COARSENING]:
+
+    # for n in [32, 512, 1024]:
+    # for n in list(np.logspace(5, 11, num=20, base=2, dtype=int)):
+    for n in [16384]:
       current_config = config.copy()
 
-      if use_shared_memory: current_config['KERNEL_FLAGS'] |= USE_SHARED_MEMORY
       current_config['WIDTH'] = n
       current_config['HEIGHT'] = n
+      current_config['KERNEL_FLAGS'] |= feature
 
       timings += generate_timings(current_config)
 

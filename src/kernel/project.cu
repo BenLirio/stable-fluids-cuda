@@ -108,14 +108,14 @@ __global__ void kernel_project_solve_red_black_shared(float *x_velocities, float
   float divergence;
 
   if (idx.x % 2 == (idx.y + red) % 2) {
-                          shared_pressures[y+0][x+0] = pressures[IDX2(idx)];
+    shared_pressures[y+0][x+0] = pressures[IDX2(idx)];
+    return;
+  } else {
+    divergence = divergences[IDX2(idx)];
     if (x == 1)           shared_pressures[y+0][x-1] = pressures[IDX2(idx2_add(idx, idx2(-1, +0)))];
     if (x == BLOCK_SIZE)  shared_pressures[y+0][x+1] = pressures[IDX2(idx2_add(idx, idx2(+1, +0)))];
     if (y == 1)           shared_pressures[y-1][x+0] = pressures[IDX2(idx2_add(idx, idx2(+0, -1)))];
     if (y == BLOCK_SIZE)  shared_pressures[y+1][x+0] = pressures[IDX2(idx2_add(idx, idx2(+0, +1)))];
-    return;
-  } else {
-    divergence = divergences[IDX2(idx)];
   }
 
   __syncthreads();
