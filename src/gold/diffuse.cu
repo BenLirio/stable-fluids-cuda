@@ -8,6 +8,7 @@
 void gold_diffuse(float *previous_values, float *values, float rate) {
   float factor = TIME_STEP*rate*N;
   for (int k = 0; k < GAUSS_SEIDEL_ITERATIONS; k++) {
+
     for (int y = 1; y <= HEIGHT; y++) {
       for (int x = 1; x <= WIDTH; x++) {
         idx2 idx = idx2(x, y);
@@ -22,5 +23,7 @@ void gold_diffuse(float *previous_values, float *values, float rate) {
         ) / (1 + 4*factor);
       }
     }
+
+
   }
 }

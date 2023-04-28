@@ -89,28 +89,28 @@ __global__ void kernel_diffuse_red_black_thread_coarsening(float *previous_value
   }
 }
 
-__global__ void kernel_diffuse_red_black_row_coarsening(float *previous_values, float *values, float rate, int red) {
-  float factor = TIME_STEP*rate*N;
-  idx2 base_idx = idx2(blockIdx.x*BLOCK_SIZE*BLOCK_SIZE, blockIdx.y*blockDim.y + threadIdx.y + 1);
-  if (idx.y > HEIGHT) return;
-  for (int i = 1; i <= BLOCK_SIZE*BLOCK_SIZE; i++) {
-    idx2 idx = idx2_add(base_idx, idx2(i, 0));
+// __global__ void kernel_diffuse_red_black_row_coarsening(float *previous_values, float *values, float rate, int red) {
+//   float factor = TIME_STEP*rate*N;
+//   idx2 base_idx = idx2(blockIdx.x*BLOCK_SIZE*BLOCK_SIZE, blockIdx.y*blockDim.y + threadIdx.y + 1);
+//   if (idx.y > HEIGHT) return;
+//   for (int i = 1; i <= BLOCK_SIZE*BLOCK_SIZE; i++) {
+//     idx2 idx = idx2_add(base_idx, idx2(i, 0));
 
 
-    if (idx.x > WIDTH || idx.y > HEIGHT) continue;
-    if (idx.x % 2 == (idx.y+red) % 2) continue;
+//     if (idx.x > WIDTH || idx.y > HEIGHT) continue;
+//     if (idx.x % 2 == (idx.y+red) % 2) continue;
 
-    values[IDX2(idx)] = (
-      previous_values[IDX2(idx)] +
-      factor*(
-        values[IDX2(idx2_add(idx, idx2(1, 0)))] +
-        values[IDX2(idx2_add(idx, idx2(-1, 0)))] +
-        values[IDX2(idx2_add(idx, idx2(0, 1)))] +
-        values[IDX2(idx2_add(idx, idx2(0, -1)))]
-      )
-    ) / (1 + 4*factor);
-  }
-}
+//     values[IDX2(idx)] = (
+//       previous_values[IDX2(idx)] +
+//       factor*(
+//         values[IDX2(idx2_add(idx, idx2(1, 0)))] +
+//         values[IDX2(idx2_add(idx, idx2(-1, 0)))] +
+//         values[IDX2(idx2_add(idx, idx2(0, 1)))] +
+//         values[IDX2(idx2_add(idx, idx2(0, -1)))]
+//       )
+//     ) / (1 + 4*factor);
+//   }
+// }
 
 void kernel_diffuse_wrapper(float *previous_values, float *values, float rate) {
 
@@ -124,11 +124,12 @@ void kernel_diffuse_wrapper(float *previous_values, float *values, float rate) {
     grid_dim.x <<= 1;
     grid_dim.y <<= 1;
     kernel_diffuse_red_black = kernel_diffuse_red_black_thread_coarsening;
-  } else if (KERNEL_FLAGS&USE_ROW_COARSENING) {
-    grid_dim.x = 1;
-    grid_dim.y = BLOCK_SIZE*BLOCK_SIZE;
-    kernel_diffuse_red_black = kernel_diffuse_red_black_row_coarsening;
   }
+  // else if (KERNEL_FLAGS&USE_ROW_COARSENING) {
+  //   grid_dim.x = 1;
+  //   grid_dim.y = BLOCK_SIZE*BLOCK_SIZE;
+  //   kernel_diffuse_red_black = kernel_diffuse_red_black_row_coarsening;
+  // }
 
   for (int i = 0; i < GAUSS_SEIDEL_ITERATIONS; i++) {
     kernel_diffuse_red_black<<<grid_dim, block_dim>>>(previous_values, values, rate, RED);

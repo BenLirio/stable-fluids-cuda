@@ -63,13 +63,14 @@ def generate_timings(config):
       timing['VALUES']['WIDTH'] = config['WIDTH']
       timing['VALUES']['HEIGHT'] = config['HEIGHT']
       timing['VALUES']['GAUSS_SEIDEL_ITERATIONS'] = config['GAUSS_SEIDEL_ITERATIONS']
-      if config['USE_GOLD']:
-        timing['TAGS'] += ['CPU']
-      else:
-        timing['TAGS'] += ['GPU']
+
+      if config['USE_GOLD']:                            timing['TAGS'] += ['CPU']
+      else:                                             timing['TAGS'] += ['GPU']
       if config['KERNEL_FLAGS']&USE_SHARED_MEMORY:      timing['TAGS'] += ['SHARED_MEMORY']
       if config['KERNEL_FLAGS']&USE_THREAD_COARSENING:  timing['TAGS'] += ['THREAD_COARSENING']
       if config['KERNEL_FLAGS']&USE_ROW_COARSENING:     timing['TAGS'] += ['ROW_COARSENING']
+      if config['USE_GOLD'] == 0 and \
+         config['KERNEL_FLAGS']==USE_NAIVE:             timing['TAGS'] += ['NAIVE']
     return timings
 
 
@@ -85,11 +86,23 @@ if __name__ == '__main__':
 
   timings = []
 
-  for feature in [USE_NAIVE, USE_SHARED_MEMORY, USE_THREAD_COARSENING, USE_ROW_COARSENING]:
+  # for feature in [USE_NAIVE, USE_SHARED_MEMORY, USE_THREAD_COARSENING, USE_ROW_COARSENING]:
+  ns = [1024]
+
+  for n in ns:
+    current_config = config.copy()
+
+    current_config['WIDTH'] = n
+    current_config['HEIGHT'] = n
+    current_config['USE_GOLD'] = 1
+
+    timings += generate_timings(current_config)
+
+  for feature in [USE_NAIVE]:
 
     # for n in [32, 512, 1024]:
     # for n in list(np.logspace(5, 11, num=20, base=2, dtype=int)):
-    for n in [16384]:
+    for n in ns:
       current_config = config.copy()
 
       current_config['WIDTH'] = n

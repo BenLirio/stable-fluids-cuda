@@ -50,7 +50,6 @@ def create_kernel_feature_bar_graph(timings, kernel_features):
 
   for timing in timings:
 
-    timing_feature = 'NAIVE'
     for feature in kernel_features:
       if feature in timing['TAGS']:
         timing_feature = feature
@@ -159,8 +158,10 @@ if __name__ == '__main__':
   with open('timings/timings.pkl', 'rb') as f:
     timings = pickle.load(f)
 
-  create_kernel_feature_bar_graph(timings, ['NAIVE', 'SHARED_MEMORY', 'ROW_COARSENING'])
-  create_kernel_feature_line_graph(timings, ['NAIVE', 'SHARED_MEMORY', 'ROW_COARSENING'])
+  # create_kernel_feature_bar_graph(timings, ['NAIVE', 'SHARED_MEMORY', 'ROW_COARSENING'])
+  # create_kernel_feature_line_graph(timings, ['NAIVE', 'SHARED_MEMORY', 'ROW_COARSENING'])
+  create_kernel_feature_bar_graph(timings, ['NAIVE', 'CPU'])
+  create_kernel_feature_line_graph(timings, ['NAIVE', 'CPU'])
   # graph_shared_memory_functions(timings)
   # graph_functions(timings)
   # graph_change_in_n(timings)

@@ -38,16 +38,16 @@ void gold_step(state_t state, int step) {
 
   if (USE_DENSITY_DIFFUSE) {
     state_property_step(c);
-    performance_start_clock(performance_ptr);
+    performance_start(performance_ptr);
     gold_diffuse(c->previous, c->current, DIFFUSION_RATE);
-    performance_record_clock(performance_ptr, step, DIFFUSE_TAG|COLOR_TAG);
+    performance_record(performance_ptr, step, DIFFUSE_TAG|COLOR_TAG);
   }
 
   if (USE_DENSITY_ADVECT) {
     state_property_step(c);
-    performance_start_clock(performance_ptr);
+    performance_start(performance_ptr);
     gold_advect(c->previous, c->current, x->current, y->current);
-    performance_record_clock(performance_ptr, step, ADVECT_TAG|COLOR_TAG);
+    performance_record(performance_ptr, step, ADVECT_TAG|COLOR_TAG);
   }
 
   // velocity
@@ -60,34 +60,34 @@ void gold_step(state_t state, int step) {
   if (USE_VELOCITY_DIFFUSE) {
 
     state_property_step(x);
-    performance_start_clock(performance_ptr);
+    performance_start(performance_ptr);
     gold_diffuse(x->previous, x->current, VISCOSITY);
-    performance_record_clock(performance_ptr, step, DIFFUSE_TAG|VELOCITY_TAG);
+    performance_record(performance_ptr, step, DIFFUSE_TAG|VELOCITY_TAG);
 
     state_property_step(y);
-    performance_start_clock(performance_ptr);
+    performance_start(performance_ptr);
     gold_diffuse(y->previous, y->current, VISCOSITY);
-    performance_record_clock(performance_ptr, step, DIFFUSE_TAG|VELOCITY_TAG);
+    performance_record(performance_ptr, step, DIFFUSE_TAG|VELOCITY_TAG);
 
-    performance_start_clock(performance_ptr);
+    performance_start(performance_ptr);
     gold_project(x->current, y->current, p->current, d->current);
-    performance_record_clock(performance_ptr, step, PROJECT_TAG);
+    performance_record(performance_ptr, step, PROJECT_TAG);
   }
   if (USE_VELOCITY_ADVECT) {
 
     state_property_step(x);
     state_property_step(y);
-    performance_start_clock(performance_ptr);
+    performance_start(performance_ptr);
     gold_advect(x->previous, x->current, x->previous, y->previous);
-    performance_record_clock(performance_ptr, step, ADVECT_TAG|VELOCITY_TAG);
+    performance_record(performance_ptr, step, ADVECT_TAG|VELOCITY_TAG);
 
-    performance_start_clock(performance_ptr);
+    performance_start(performance_ptr);
     gold_advect(y->previous, y->current, x->previous, y->previous);
-    performance_record_clock(performance_ptr, step, ADVECT_TAG|VELOCITY_TAG);
+    performance_record(performance_ptr, step, ADVECT_TAG|VELOCITY_TAG);
 
-    performance_start_clock(performance_ptr);
+    performance_start(performance_ptr);
     gold_project(x->current, y->current, p->current, d->current);
-    performance_record_clock(performance_ptr, step, PROJECT_TAG);
+    performance_record(performance_ptr, step, PROJECT_TAG);
   }
   performance_free(performance_ptr);
 }
