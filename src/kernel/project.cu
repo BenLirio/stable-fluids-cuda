@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <cuda_runtime.h>
+#include <kernel/solve.cuh>
 
 __global__ void kernel_project_single_block(float *x_velocities, float *y_velocities, float *pressures, float *divergences) {
   float h = 1.0f / sqrt((float)N);
@@ -139,18 +140,10 @@ __global__ void kernel_project_write(float *x_velocities, float *y_velocities, f
 }
 
 void kernel_project_wrapper(float *x_velocities, float *y_velocities, float *pressures, float *divergences) {
-
-  void (*kernel_project_solve_red_black)(float *x_velocities, float *y_velocities, float *pressures, float *divergences, int red) = kernel_project_solve_red_black_naive;
-
-  if (KERNEL_FLAGS&USE_SHARED_MEMORY) {
-    kernel_project_solve_red_black = kernel_project_solve_red_black_shared;
-  }
-
   kernel_project_prepare<<<GRID_DIM, BLOCK_DIM>>>(x_velocities, y_velocities, pressures, divergences);
-  for (int i = 0; i < GAUSS_SEIDEL_ITERATIONS; i++) {
-    kernel_project_solve_red_black<<<GRID_DIM, BLOCK_DIM>>>(x_velocities, y_velocities, pressures, divergences, RED);
-    kernel_project_solve_red_black<<<GRID_DIM, BLOCK_DIM>>>(x_velocities, y_velocities, pressures, divergences, BLACK);
-  }
+  float factor = 1.0f;
+  float divisor = 4.0f;
+  kernel_solve(divergences, pressures, NULL, factor, divisor);
   kernel_project_write<<<GRID_DIM, BLOCK_DIM>>>(x_velocities, y_velocities, pressures, divergences);
 }
 

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <util/idx2.cuh>
 #include <cuda_runtime.h>
+#include <kernel/solve.cuh>
 
 __global__ void kernel_diffuse_red_black_naive(float *previous_values, float *values, float rate, int red) {
   float factor = TIME_STEP*rate*N;
@@ -113,33 +114,10 @@ __global__ void kernel_diffuse_red_black_thread_coarsening(float *previous_value
 // }
 
 void kernel_diffuse_wrapper(float *previous_values, float *values, float rate) {
-
-  void (*kernel_diffuse_red_black)(float *previous_values, float *values, float rate, int red) = kernel_diffuse_red_black_naive;
-  dim3 grid_dim = dim3(GRID_DIM.x, GRID_DIM.y);
-  dim3 block_dim = dim3(BLOCK_DIM.x, BLOCK_DIM.y);
-
-  if (KERNEL_FLAGS&USE_SHARED_MEMORY) {
-    kernel_diffuse_red_black = kernel_diffuse_red_black_shared;
-  } else if (KERNEL_FLAGS&USE_THREAD_COARSENING) {
-    grid_dim.x <<= 1;
-    grid_dim.y <<= 1;
-    kernel_diffuse_red_black = kernel_diffuse_red_black_thread_coarsening;
-  }
-  // else if (KERNEL_FLAGS&USE_ROW_COARSENING) {
-  //   grid_dim.x = 1;
-  //   grid_dim.y = BLOCK_SIZE*BLOCK_SIZE;
-  //   kernel_diffuse_red_black = kernel_diffuse_red_black_row_coarsening;
-  // }
-
-  for (int i = 0; i < GAUSS_SEIDEL_ITERATIONS; i++) {
-    kernel_diffuse_red_black<<<grid_dim, block_dim>>>(previous_values, values, rate, RED);
-    kernel_diffuse_red_black<<<grid_dim, block_dim>>>(previous_values, values, rate, BLACK);
-  }
+  float factor = TIME_STEP*rate*N;
+  float divisor = 1 + 4*factor;
+  kernel_solve(previous_values, values, NULL, factor, divisor);
 }
-
-
-
-
 
 
 
