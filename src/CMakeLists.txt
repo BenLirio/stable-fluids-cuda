@@ -4,7 +4,15 @@ add_subdirectory(util)
 add_subdirectory(kernel)
 
 add_executable(${PROJECT_NAME} main.cu)
+if(OpenMP_CXX_FOUND)
+  target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)
+endif()
+if(OpenMP_C_FOUND)
+  target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_C)
+endif()
 target_link_libraries(${PROJECT_NAME} PRIVATE gold util kernel)
+set_property(TARGET ${PROJECT_NAME} PROPERTY CUDA_ARCHITECTURES OFF)
+
 # target_link_libraries(${PROJECT_NAME} PRIVATE gold util kernel glfw GLEW::GLEW OpenGL::GL)
 
 # enable_testing()

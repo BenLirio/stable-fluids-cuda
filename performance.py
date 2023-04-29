@@ -5,7 +5,7 @@ import pickle
 import re
 from subprocess import run, Popen, PIPE
 from tempfile import TemporaryDirectory
-from sfc import get_config, OUTPUT_PERFORMANCE, build, USE_SHARED_MEMORY, USE_THREAD_COARSENING, USE_NAIVE, USE_ROW_COARSENING
+from sfc import get_config, OUTPUT_PERFORMANCE, build, USE_SHARED_MEMORY, USE_THREAD_COARSENING, USE_NAIVE, USE_ROW_COARSENING, OUTPUT_SOLVE_ERROR
 from pathlib import Path
 from uuid import uuid4
 import shutil
@@ -17,6 +17,7 @@ tags = [
   'PROJECT',
   'COLOR',
   'VELOCITY',
+  'SOLVE',
 ]
 
 def parse_timing_line(line):
@@ -28,19 +29,17 @@ def parse_timing_line(line):
     if f'[{tag}]' in line:
       fields['TAGS'].append(tag)
 
-  step_pattern = r'\[step=(\d+)\]'
-  step_match = re.search(step_pattern, line)
-  if step_match:
-    step = int(step_match.group(1))
-    fields['VALUES']['STEP'] = step
-  else: raise Exception(f'Could not find step in line: {line}')
-
-  time_pattern = r'\[time=(\d+\.\d+)\]'
-  time_match = re.search(time_pattern, line)
-  if time_match:
-    time = float(time_match.group(1))
-    fields['VALUES']['TIME'] = time
-  else: raise Exception(f'Could not find time in line: {line}')
+  patterns = [
+    [r'\[time=(\d+\.\d+)\]', float, 'TIME'],
+    [r'\[error=(\d+\.\d+)\]', float, 'ERROR'],
+    [r'\[step=(\d+)\]', int, 'STEP'],
+    [r'\[gauss_step=(\d+)\]', int, 'GAUSS_STEP'],
+  ]
+  for [pattern, typecast, label] in patterns:
+    match = re.search(pattern, line)
+    if match:
+      value = typecast(match.group(1))
+      fields['VALUES'][label] = value
 
   return [fields]
 
@@ -57,6 +56,7 @@ def generate_timings(config):
     stable_fluids_process = run([
       f'{build_dir}/src/stable-fluids-cuda',
     ], capture_output=True, text=True)
+    print(stable_fluids_process.stderr)
 
     timings = parse_timings(stable_fluids_process.stdout)
     for timing in timings:
@@ -82,26 +82,26 @@ if __name__ == '__main__':
     uid = uuid4().hex
     shutil.move(path, f'{output_dir}/old/{uid}.pkl')
 
-  config = get_config(output=OUTPUT_PERFORMANCE)
+  config = get_config(output=OUTPUT_PERFORMANCE|OUTPUT_SOLVE_ERROR)
 
   timings = []
 
   # for feature in [USE_NAIVE, USE_SHARED_MEMORY, USE_THREAD_COARSENING, USE_ROW_COARSENING]:
-  ns = [1024]
+  ns = [64]
+  # [32, 512, 1024]
+  # list(np.logspace(5, 11, num=20, base=2, dtype=int))
 
-  for n in ns:
-    current_config = config.copy()
+  # for n in ns:
+  #   current_config = config.copy()
 
-    current_config['WIDTH'] = n
-    current_config['HEIGHT'] = n
-    current_config['USE_GOLD'] = 1
+  #   current_config['WIDTH'] = n
+  #   current_config['HEIGHT'] = n
+  #   current_config['USE_GOLD'] = 1
 
-    timings += generate_timings(current_config)
+  #   timings += generate_timings(current_config)
 
   for feature in [USE_NAIVE]:
 
-    # for n in [32, 512, 1024]:
-    # for n in list(np.logspace(5, 11, num=20, base=2, dtype=int)):
     for n in ns:
       current_config = config.copy()
 

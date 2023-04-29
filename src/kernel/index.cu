@@ -38,7 +38,7 @@ void kernel_step(state_t state, int current_step) {
   if (USE_DENSITY_DIFFUSE) {
     state_property_step(c);
     performance_start(performance_ptr);
-    kernel_diffuse_wrapper(c->previous, c->current, DIFFUSION_RATE);
+    kernel_diffuse_wrapper(current_step, c->previous, c->current, DIFFUSION_RATE);
     performance_record(performance_ptr, current_step, DIFFUSE_TAG|COLOR_TAG);
   }
 
@@ -59,16 +59,16 @@ void kernel_step(state_t state, int current_step) {
 
     state_property_step(x);
     performance_start(performance_ptr);
-    kernel_diffuse_wrapper(x->previous, x->current, VISCOSITY);
+    kernel_diffuse_wrapper(current_step, x->previous, x->current, VISCOSITY);
     performance_record(performance_ptr, current_step, DIFFUSE_TAG|VELOCITY_TAG);
 
     state_property_step(y);
     performance_start(performance_ptr);
-    kernel_diffuse_wrapper(y->previous, y->current, VISCOSITY);
+    kernel_diffuse_wrapper(current_step, y->previous, y->current, VISCOSITY);
     performance_record(performance_ptr, current_step, DIFFUSE_TAG|VELOCITY_TAG);
 
     performance_start(performance_ptr);
-    kernel_project_wrapper(x->current, y->current, p->current, d->current);
+    kernel_project_wrapper(current_step, x->current, y->current, p->current, d->current);
     performance_record(performance_ptr, current_step, PROJECT_TAG);
   }
 
@@ -85,7 +85,7 @@ void kernel_step(state_t state, int current_step) {
     performance_record(performance_ptr, current_step, ADVECT_TAG|VELOCITY_TAG);
 
     performance_start(performance_ptr);
-    kernel_project_wrapper(x->current, y->current, p->current, d->current);
+    kernel_project_wrapper(current_step, x->current, y->current, p->current, d->current);
     performance_record(performance_ptr, current_step, PROJECT_TAG);
   }
 

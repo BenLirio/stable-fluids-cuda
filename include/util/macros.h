@@ -47,10 +47,11 @@
 #define NUM_NEIGHBORS 4
 #define ASSERTIONS_ENABLED 0
 #define VERBOSE_ASSERTIONS 0
-#define EQ_THRESHOLD 0.0001f
+#define EQ_THRESHOLD 0.000001f
 #define MAX_AVERAGE_ERROR_THRESHOLD 0.0001f
 #define MAX_SINGLE_ERROR_THRESHOLD 0.001f
-#define GUASS_SEIDEL_THREASHOLD 0.00001f
+#define GOLD_SOLVE_ERROR 0.000000000001f
+#define GOLD_SOLVE_EPSILON 0.000000000001f
 #define N (WIDTH * HEIGHT)
 
 #define BLOCK_SIZE 32
@@ -60,9 +61,18 @@
 #define RED 0
 #define BLACK 1
 
+#define KERNEL_ERROR_CHECK() { \
+    cudaError_t __stable_fluids_cuda_err = cudaGetLastError(); \
+    if (__stable_fluids_cuda_err != cudaSuccess) { \
+        printf("CUDA error: %s\n", cudaGetErrorString(__stable_fluids_cuda_err)); \
+        exit(1); \
+    } \
+}
+
 // OUTPUT FLAGS
 #define OUTPUT_PERFORMANCE (1<<0)
 #define OUTPUT_GIF (1<<1)
+#define OUTPUT_SOLVE_ERROR (1<<2)
 
 // KERNEL FLAGS
 #define USE_SHARED_MEMORY (1<<0)
@@ -92,7 +102,7 @@
 #define SOLVE_TAG (1<<9)
 #define SOLVE_TAG_STRING "[SOLVE]"
 
-#define MAX_CONVERGENCE_ITERATIONS 1000
+#define MAX_CONVERGENCE_ITERATIONS 50
 #define CHECK_CONVERGENCE_EVERY 100
 #define COLOR_SINK_RATE 0.01f
 #define VELOCITY_SINK_RATE 0.01f

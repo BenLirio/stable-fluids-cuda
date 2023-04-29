@@ -152,16 +152,44 @@ def graph_shared_memory(timings):
   ax.legend()
   fig.savefig('timings/shared_memory.png')
 
+def create_gauss_solve_error_graph(timings):
+  fig, ax = plt.subplots()
+
+  timings = [ x for x in timings if 'SOLVE' in x['TAGS'] ]
+  diffuse_timings = [ x for x in timings if 'DIFFUSE' in x['TAGS'] ]
+  project_timings = [ x for x in timings if 'PROJECT' in x['TAGS'] ]
+
+  for timings in [diffuse_timings, project_timings]:
+    gauss_steps = list(set([ int(x['VALUES']['GAUSS_STEP']) for x in timings ]))
+    reverse_gauss_step_map = {}
+    for i in range(len(gauss_steps)):
+      reverse_gauss_step_map[gauss_steps[i]] = i
+    
+    errors = np.zeros(len(gauss_steps), dtype=float)
+    idx_count = np.zeros(len(gauss_steps), dtype=int)
+    for timing in timings:
+      gauss_step = int(timing['VALUES']['GAUSS_STEP'])
+      idx = reverse_gauss_step_map[gauss_step]
+      idx_count[idx] += 1
+      if 'ERROR' not in timing['VALUES']:
+        print("WARNING: No error in timing")
+      errors[idx] = timing['VALUES'].get('ERROR', 0)
+    
+    ax.plot(gauss_steps, errors)
+
+  fig.savefig(f'{output_dir}/gauss_solve_error.png')
 
 if __name__ == '__main__':
   Path(f'{output_dir}').mkdir(parents=True, exist_ok=True)
   with open('timings/timings.pkl', 'rb') as f:
     timings = pickle.load(f)
+  
+  create_gauss_solve_error_graph(timings)
 
   # create_kernel_feature_bar_graph(timings, ['NAIVE', 'SHARED_MEMORY', 'ROW_COARSENING'])
   # create_kernel_feature_line_graph(timings, ['NAIVE', 'SHARED_MEMORY', 'ROW_COARSENING'])
-  create_kernel_feature_bar_graph(timings, ['NAIVE', 'CPU'])
-  create_kernel_feature_line_graph(timings, ['NAIVE', 'CPU'])
+  # create_kernel_feature_bar_graph(timings, ['NAIVE', 'CPU'])
+  # create_kernel_feature_line_graph(timings, ['NAIVE', 'CPU'])
   # graph_shared_memory_functions(timings)
   # graph_functions(timings)
   # graph_change_in_n(timings)

@@ -1,5 +1,6 @@
 #ifndef STABLE_FLUIDS_CUDA_PERFORMANCE_H_
 #define STABLE_FLUIDS_CUDA_PERFORMANCE_H_
+#include <time.h>
 
 struct performance_t {
   clock_t clock_start;

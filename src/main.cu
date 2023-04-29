@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <util/vec2.cuh>
 #include <kernel/index.cuh>
+#include <omp.h>
+#include <stdlib.h>
 
 void output_gif_frame(float *colors, int i) {
   if (i != 0)
