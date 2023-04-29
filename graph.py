@@ -2,6 +2,7 @@ from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
+import sfc
 
 output_dir = 'graphs'
 
@@ -152,31 +153,40 @@ def graph_shared_memory(timings):
   ax.legend()
   fig.savefig('timings/shared_memory.png')
 
-def create_gauss_solve_error_graph(timings):
+def create_gauss_solve_error_graph(timings, kernel_flags=None):
   fig, ax = plt.subplots()
 
   timings = [ x for x in timings if 'SOLVE' in x['TAGS'] ]
-  diffuse_timings = [ x for x in timings if 'DIFFUSE' in x['TAGS'] ]
-  project_timings = [ x for x in timings if 'PROJECT' in x['TAGS'] ]
 
-  for timings in [diffuse_timings, project_timings]:
-    gauss_steps = list(set([ int(x['VALUES']['GAUSS_STEP']) for x in timings ]))
-    reverse_gauss_step_map = {}
-    for i in range(len(gauss_steps)):
-      reverse_gauss_step_map[gauss_steps[i]] = i
-    
-    errors = np.zeros(len(gauss_steps), dtype=float)
-    idx_count = np.zeros(len(gauss_steps), dtype=int)
-    for timing in timings:
-      gauss_step = int(timing['VALUES']['GAUSS_STEP'])
-      idx = reverse_gauss_step_map[gauss_step]
-      idx_count[idx] += 1
-      if 'ERROR' not in timing['VALUES']:
-        print("WARNING: No error in timing")
-      errors[idx] = timing['VALUES'].get('ERROR', 0)
-    
-    ax.plot(gauss_steps, errors)
+  if kernel_flags is None:
+    kernel_flags = list(set([ x['VALUES']['KERNEL_FLAGS'] for x in timings ]))
+  kernel_flags.sort()
 
+
+  for kernel_flag in kernel_flags:
+    kernel_flag_timings = [ x for x in timings if (x['VALUES']['KERNEL_FLAGS'] == kernel_flag) ]
+    diffuse_timings = [ x for x in kernel_flag_timings if 'DIFFUSE' in x['TAGS'] ]
+    project_timings = [ x for x in kernel_flag_timings if 'PROJECT' in x['TAGS'] ]
+    for [kernel_function_name, kernel_flag_function_timings] in [('diffuse', diffuse_timings), ('project', project_timings)]:
+      gauss_steps = list(set([ int(x['VALUES']['GAUSS_STEP']) for x in kernel_flag_function_timings ]))
+      reverse_gauss_step_map = {}
+      for i in range(len(gauss_steps)):
+        reverse_gauss_step_map[gauss_steps[i]] = i
+      
+      errors = np.zeros(len(gauss_steps), dtype=float)
+      idx_count = np.zeros(len(gauss_steps), dtype=int)
+      for timing in kernel_flag_function_timings:
+        gauss_step = int(timing['VALUES']['GAUSS_STEP'])
+        idx = reverse_gauss_step_map[gauss_step]
+        idx_count[idx] += 1
+        if 'ERROR' not in timing['VALUES']:
+          print("WARNING: No error in timing")
+        errors[idx] = timing['VALUES'].get('ERROR', 0)
+      
+      label = f'{sfc.string_of_kernel_flag(kernel_flag)} ({kernel_function_name})'
+      ax.plot(gauss_steps, errors, label=label)
+
+  ax.legend()
   fig.savefig(f'{output_dir}/gauss_solve_error.png')
 
 if __name__ == '__main__':
@@ -184,7 +194,11 @@ if __name__ == '__main__':
   with open('timings/timings.pkl', 'rb') as f:
     timings = pickle.load(f)
   
-  create_gauss_solve_error_graph(timings)
+  features = [
+    sfc.USE_RED_BLACK,
+    sfc.USE_THREAD_FENCE|sfc.USE_SHARED_MEMORY,
+  ]
+  create_gauss_solve_error_graph(timings, features)
 
   # create_kernel_feature_bar_graph(timings, ['NAIVE', 'SHARED_MEMORY', 'ROW_COARSENING'])
   # create_kernel_feature_line_graph(timings, ['NAIVE', 'SHARED_MEMORY', 'ROW_COARSENING'])

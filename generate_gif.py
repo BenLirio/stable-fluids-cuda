@@ -1,10 +1,12 @@
 import glob
 import os
+import shutil
 from subprocess import run, Popen, PIPE
 import sys
 from tempfile import TemporaryDirectory
 from pathlib import Path
 from sfc import config_to_string, get_config, build, OUTPUT_GIF
+from uuid import uuid4
 
 VIZ_PATH = '/usr/bin/viz'
 ANIMATION_DURATION_SECONDS = 6
@@ -33,9 +35,13 @@ def generate_gif(config):
       stable_fluids_process.stdout.close()
       viz_process.communicate()
 
+output_dir = 'gifs'
 if __name__ == '__main__':
-  for path in glob.glob('gifs/*.gif'):
-    os.remove(path)
+  Path(f'{output_dir}/old').mkdir(parents=True, exist_ok=True)
+  for path in glob.glob(f'{output_dir}/*.gif'):
+    uid = uuid4().hex
+    shutil.move(path, f'{output_dir}/old/{uid}.gif')
+
   config = get_config(output=OUTPUT_GIF)
   generate_gif(config)
   exit(0)
