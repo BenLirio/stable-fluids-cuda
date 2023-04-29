@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 import sfc
+import plotly.figure_factory as ff
 
 output_dir = 'graphs'
 
@@ -189,16 +190,64 @@ def create_gauss_solve_error_graph(timings, kernel_flags=None):
   ax.legend()
   fig.savefig(f'{output_dir}/gauss_solve_error.png')
 
+def create_gantt_chart(timings, kernel_flags=None):
+  data = []
+  for kernel_flag in kernel_flags:
+    kernel_flag_timings = [ x for x in timings if (x['VALUES']['KERNEL_FLAGS'] == kernel_flag) ]
+    timings_by_id = {}
+    for timing in kernel_flag_timings:
+      if timings_by_id.get(timing['VALUES']['ID']) is None:
+        timings_by_id[timing['VALUES']['ID']] = []
+      timings_by_id[timing['VALUES']['ID']].append(timing)
+    timing_pairs = list(timings_by_id.values())
+    for timing_pair in timing_pairs:
+      timing_pair.sort(key=lambda x: x['VALUES']['TIME'])
+      assert(len(timing_pair) == 2)
+
+    def timing_to_gantt_entry(timing_pair):
+      [start_timing, end_timing] = timing_pair
+      task = 'Unknown'
+      if 'DIFFUSE' in start_timing['TAGS']:
+        task = 'Diffuse'
+      elif 'PROJECT' in start_timing['TAGS']:
+        task = 'Project'
+      elif 'ADVECT' in start_timing['TAGS']:
+        task = 'Advect'
+
+      return {
+        'Task': task,
+        'Start': start_timing['VALUES']['TIME'],
+        'Finish': end_timing['VALUES']['TIME'],
+        'Resource': sfc.string_of_kernel_flag(kernel_flag)
+      }
+    
+    data = data + [ timing_to_gantt_entry(timing_pair) for timing_pair in timing_pairs ]
+
+  # # Create a color scale for resources (optional)
+  # colors = {
+  #     "Resource 1": "rgb(220, 0, 0)",
+  #     "Resource 2": "rgb(0, 0, 220)",
+  # }
+
+  # # Create the Gantt chart
+  fig = ff.create_gantt(data, index_col="Resource", show_colorbar=True, group_tasks=True)
+
+  # # Show the Gantt chart
+  fig.show()
+
+
 if __name__ == '__main__':
   Path(f'{output_dir}').mkdir(parents=True, exist_ok=True)
   with open('timings/timings.pkl', 'rb') as f:
     timings = pickle.load(f)
-  
+
   features = [
     sfc.USE_RED_BLACK,
     sfc.USE_THREAD_FENCE|sfc.USE_SHARED_MEMORY,
   ]
-  create_gauss_solve_error_graph(timings, features)
+  create_gantt_chart(timings, features)
+
+  # create_gauss_solve_error_graph(timings, features) # This one is GOOD
 
   # create_kernel_feature_bar_graph(timings, ['NAIVE', 'SHARED_MEMORY', 'ROW_COARSENING'])
   # create_kernel_feature_line_graph(timings, ['NAIVE', 'SHARED_MEMORY', 'ROW_COARSENING'])

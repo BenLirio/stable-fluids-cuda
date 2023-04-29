@@ -10,6 +10,7 @@
 #include <cuda_runtime.h>
 #include <kernel/solve.cuh>
 #include <gold/solve.cuh>
+#include <util/state.h>
 
 
 __global__ void kernel_project_prepare(float *x_velocities, float *y_velocities, float *pressures, float *divergences) {
@@ -34,7 +35,7 @@ __global__ void kernel_project_write(float *x_velocities, float *y_velocities, f
   y_velocities[IDX2(idx)] -= get_y_derivative(pressures, idx) / (2*h);
 }
 
-void kernel_project_wrapper(int step, float *x_velocities, float *y_velocities, float *pressures, float *divergences) {
+void kernel_project_wrapper(state_t *state, float *x_velocities, float *y_velocities, float *pressures, float *divergences) {
   kernel_project_prepare<<<GRID_DIM, BLOCK_DIM>>>(x_velocities, y_velocities, pressures, divergences);
   CUDA_CHECK(cudaPeekAtLastError());
 
@@ -44,10 +45,10 @@ void kernel_project_wrapper(int step, float *x_velocities, float *y_velocities, 
     float *expected_values;
     cudaMalloc(&expected_values, N*sizeof(float));
     gold_solve_wrapper(expected_values, divergences, pressures, factor, divisor);
-    kernel_solve(step, divergences, pressures, expected_values, factor, divisor, PROJECT_TAG);
+    kernel_solve(state, divergences, pressures, expected_values, factor, divisor, PROJECT_TAG);
     cudaFree(expected_values);
   } else {
-    kernel_solve(step, divergences, pressures, NULL, factor, divisor, PROJECT_TAG);
+    kernel_solve(state, divergences, pressures, NULL, factor, divisor, PROJECT_TAG);
   }
 
   kernel_project_write<<<GRID_DIM, BLOCK_DIM>>>(x_velocities, y_velocities, pressures, divergences);

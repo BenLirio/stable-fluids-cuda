@@ -6,6 +6,8 @@
 #include <util/performance.cuh>
 #include <stdlib.h>
 #include <unistd.h>
+#include <util/state.h>
+#include <util/log.cuh>
 
 __global__ void kernel_solve_no_block_sync(float *base, float *values, float factor, float divisor, int iterations) {
   int x = blockIdx.x * blockDim.x + threadIdx.x + 1;
@@ -196,7 +198,7 @@ bool is_host_iterative() {
 void (*kernel_iterative)(float*, float*, float, float, int);
 void (*host_iterative)(int, float*, float*, float, float);
 
-int kernel_solve(int step, float *base, float *values, float *expected_values, float factor, float divisor, int tags) {
+int kernel_solve(state_t *state, float *base, float *values, float *expected_values, float factor, float divisor, int tags) {
 
   if (KERNEL_FLAGS==USE_RED_BLACK) host_iterative = kernel_solve_red_black;
   if (KERNEL_FLAGS==USE_NO_BLOCK_SYNC) kernel_iterative = kernel_solve_no_block_sync;
@@ -219,10 +221,7 @@ int kernel_solve(int step, float *base, float *values, float *expected_values, f
         kernel_iterative<<<GRID_DIM, BLOCK_DIM>>>(base, values, factor, divisor, num_iterations);
         CUDA_CHECK(cudaPeekAtLastError());
         float error = kernel_solve_get_error(values, expected_values);
-        if (OUTPUT_PERFORMANCE) {
-          print_tags(tags|SOLVE_TAG);
-          printf("[step=%d][gauss_step=%d][error=%f]\n", step, num_iterations, error);
-        }
+        log(state, rand(), tags|SOLVE_TAG, error, num_iterations);
         if (error < EQ_THRESHOLD) break;
       }
       cudaFree(saved_base);
@@ -237,8 +236,7 @@ int kernel_solve(int step, float *base, float *values, float *expected_values, f
 
         float error = kernel_solve_get_error(values, expected_values);
         if (OUTPUT_PERFORMANCE) {
-          print_tags(tags|SOLVE_TAG);
-          printf("[step=%d][gauss_step=%d][error=%f]\n", step, num_iterations, error);
+          log(state, rand(), tags|SOLVE_TAG, error, num_iterations);
         }
         if (error < EQ_THRESHOLD) return num_iterations;
       }

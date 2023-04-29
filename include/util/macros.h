@@ -46,6 +46,7 @@
 
 #define NUM_COLORS 3
 #define NUM_VELOCITY_COMPONENTS 2
+#define LOG_BUFFER_SIZE 1024
 #define SWAP(x0, x) {float *tmp = x0; x0 = x; x = tmp;}
 #define NUM_NEIGHBORS 4
 #define ASSERTIONS_ENABLED 0

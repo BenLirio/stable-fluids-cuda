@@ -19,14 +19,14 @@
 #include <gold/sink_velocities.cuh>
 #include <util/performance.cuh>
 
-void gold_step(state *p_state) {
+void gold_step(state *state) {
   performance_t *performance_ptr;  
   performance_malloc(&performance_ptr);
 
-  int step = p_state->step;
-  state_property_t *c = p_state->all_colors[0];
-  state_property_t *x = p_state->all_velocities[0];
-  state_property_t *y = p_state->all_velocities[1];
+  int step = state->step;
+  state_property_t *c = state->all_colors[0];
+  state_property_t *x = state->all_velocities[0];
+  state_property_t *y = state->all_velocities[1];
   float *p = (float*)malloc(N*sizeof(float));
   float *d = (float*)malloc(N*sizeof(float));
 
