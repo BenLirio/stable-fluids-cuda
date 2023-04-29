@@ -46,7 +46,7 @@
 
 #define NUM_COLORS 3
 #define NUM_VELOCITY_COMPONENTS 2
-#define LOG_BUFFER_SIZE 1024
+#define LOG_BUFFER_SIZE 4096
 #define SWAP(x0, x) {float *tmp = x0; x0 = x; x = tmp;}
 #define NUM_NEIGHBORS 4
 #define ASSERTIONS_ENABLED 0
@@ -57,8 +57,9 @@
 #define GOLD_SOLVE_ERROR 0.000000000001f
 #define GOLD_SOLVE_EPSILON 0.000000000001f
 #define N (WIDTH * HEIGHT)
+#define COARSENING_FACTOR 2
 
-#define BLOCK_SIZE 16
+#define BLOCK_SIZE 32
 #define BLOCK_DIM (dim3(BLOCK_SIZE, BLOCK_SIZE))
 #define GRID_DIM (dim3((WIDTH + BLOCK_SIZE - 1) / BLOCK_SIZE, (HEIGHT + BLOCK_SIZE - 1) / BLOCK_SIZE))
 
@@ -85,6 +86,7 @@ inline void gpuAssert(cudaError_t code, const char *file, int line) {
 #define USE_NO_BLOCK_SYNC (1<<3)
 #define USE_RED_BLACK (1<<4)
 #define USE_THREAD_FENCE (1<<5)
+#define USE_NO_IDX (1<<6)
 
 // TAGS
 #define MILLIS_PER_SECOND 1000
@@ -109,7 +111,7 @@ inline void gpuAssert(cudaError_t code, const char *file, int line) {
 #define SOLVE_TAG (1<<9)
 #define SOLVE_TAG_STRING "[SOLVE]"
 
-#define MAX_CONVERGENCE_ITERATIONS 50
+#define MAX_CONVERGENCE_ITERATIONS 400
 #define CHECK_CONVERGENCE_EVERY 100
 #define COLOR_SINK_RATE 0.01f
 #define VELOCITY_SINK_RATE 0.01f

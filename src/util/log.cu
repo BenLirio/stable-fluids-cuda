@@ -5,6 +5,7 @@
 #include <util/performance.cuh>
 
 int log(state_t *state, int id, int tags, float error, int guass_step) {
+  if (!(OUTPUT&OUTPUT_PERFORMANCE)) return 0;
   cudaEvent_t stop;
   CUDA_CHECK(cudaEventCreate(&stop));
   CUDA_CHECK(cudaEventRecord(stop));
@@ -32,6 +33,7 @@ int log(state_t *state, int id, int tags) {
 }
 
 void empty_log_buffer(state_t *state) {
+  if (!(OUTPUT&OUTPUT_PERFORMANCE)) return;
   if (state->log_buffer_filled > LOG_BUFFER_SIZE) {
     printf("Log buffer overflow\n");
     exit(1);

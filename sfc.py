@@ -17,6 +17,7 @@ USE_ROW_COARSENING = 1<<2
 USE_NO_BLOCK_SYNC = 1<<3
 USE_RED_BLACK = 1<<4
 USE_THREAD_FENCE = 1<<5
+USE_NO_IDX = 1<<6
 
 def string_of_kernel_flag(kernel_flag):
   if kernel_flag == USE_NAIVE: return 'Naive'
@@ -29,6 +30,7 @@ def string_of_kernel_flag(kernel_flag):
   if kernel_flag == (USE_RED_BLACK|USE_THREAD_FENCE): return 'Red Black + Thread Fence'
   if kernel_flag == (USE_RED_BLACK|USE_THREAD_FENCE|USE_SHARED_MEMORY): return 'Red Black + Thread Fence + Shared Memory'
   if kernel_flag == (USE_THREAD_FENCE|USE_SHARED_MEMORY): return 'Thread Fence + Shared Memory'
+  if kernel_flag == (USE_THREAD_FENCE|USE_SHARED_MEMORY|USE_NO_IDX): return 'Thread Fence + Shared Memory + No Idx'
   return 'Unknown'
 
 NUM_VARIATIONS = 8
@@ -85,6 +87,7 @@ def get_config(output):
   parser.add_argument('--use-no-block-sync', action='store_true')
   parser.add_argument('--use-red-black', action='store_true')
   parser.add_argument('--use-thread-fence', action='store_true')
+  parser.add_argument('--use-no-idx', action='store_true')
 
   args = parser.parse_args()
   config = {
@@ -105,5 +108,6 @@ def get_config(output):
   if args.use_no_block_sync: config['KERNEL_FLAGS'] |= USE_NO_BLOCK_SYNC
   if args.use_red_black: config['KERNEL_FLAGS'] |= USE_RED_BLACK
   if args.use_thread_fence: config['KERNEL_FLAGS'] |= USE_THREAD_FENCE
+  if args.use_no_idx: config['KERNEL_FLAGS'] |= USE_NO_IDX
 
   return config

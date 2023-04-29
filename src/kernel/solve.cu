@@ -124,6 +124,47 @@ __global__ void kernel_solve_thread_fence_shared_memory(float *base, float *valu
   values[IDX2(idx)] = shared_values[ty][tx];
 }
 
+__global__ void kernel_solve_thread_fence_shared_memory_no_idx(float *base, float *values, float factor, float divisor, int iterations) {
+  int tx = threadIdx.x;
+  int ty = threadIdx.y;
+  int offx = blockIdx.x * blockDim.x;
+  int offy = blockIdx.y * blockDim.y;
+  int x = offx + tx;
+  int y = offy + ty;
+  if (x >= WIDTH || y >= HEIGHT) return;
+  int tidx = ty*BLOCK_SIZE+tx;
+  int idx = y*WIDTH+x;
+  __shared__ float shared_values[BLOCK_SIZE*BLOCK_SIZE];
+
+  float base_register = base[idx];
+  shared_values[tidx] = values[idx];
+  __syncthreads();
+
+  for (int i = 0; i < iterations; i++) {
+    float next_value = base_register;
+    next_value += tx==0
+      ? factor*(x==0 ? values[y*WIDTH+WIDTH-1] : values[y*WIDTH+x-1])
+      : factor*shared_values[tidx-1];
+    next_value += (tx==BLOCK_SIZE-1) || (x==WIDTH-1)
+      ? factor*(x==WIDTH-1 ? values[y*WIDTH] : values[y*WIDTH+x+1])
+      : factor*shared_values[tidx+1];
+    next_value += ty==0
+      ? factor*(y==0 ? values[(HEIGHT-1)*WIDTH+x] : values[(y-1)*WIDTH+x])
+      : factor*shared_values[tidx-BLOCK_SIZE];
+    next_value += (ty==BLOCK_SIZE-1) || (y==HEIGHT-1)
+      ? factor*(y==HEIGHT-1 ? values[x] : values[(y+1)*WIDTH+x])
+      : factor*shared_values[tidx+BLOCK_SIZE];
+    next_value /= divisor;
+    if (tx==0||tx==BLOCK_SIZE-1||x==WIDTH-1||ty==0||ty==BLOCK_SIZE-1||y==HEIGHT-1)
+      values[idx] = next_value;
+    __threadfence();
+    __syncthreads();
+    shared_values[tidx] = next_value;
+    __syncthreads();
+  }
+  values[idx] = shared_values[tidx];
+}
+
 __global__ void kernel_solve_red_black_thread_fence_shared_memory(float *base, float *values, float factor, float divisor, int iterations) {
   int tx = threadIdx.x;
   int ty = threadIdx.y;
@@ -186,7 +227,8 @@ bool is_kernel_iterative() {
     (KERNEL_FLAGS==USE_THREAD_FENCE) ||
     (KERNEL_FLAGS==(USE_THREAD_FENCE|USE_RED_BLACK)) ||
     (KERNEL_FLAGS==(USE_THREAD_FENCE|USE_RED_BLACK|USE_SHARED_MEMORY)) ||
-    (KERNEL_FLAGS==(USE_THREAD_FENCE|USE_SHARED_MEMORY))
+    (KERNEL_FLAGS==(USE_THREAD_FENCE|USE_SHARED_MEMORY)) ||
+    (KERNEL_FLAGS==(USE_THREAD_FENCE|USE_SHARED_MEMORY|USE_NO_IDX))
   );
 }
 bool is_host_iterative() {
@@ -206,6 +248,7 @@ int kernel_solve(state_t *state, float *base, float *values, float *expected_val
   if (KERNEL_FLAGS==(USE_THREAD_FENCE|USE_RED_BLACK)) kernel_iterative = kernel_solve_red_black_thread_fence;
   if (KERNEL_FLAGS==(USE_THREAD_FENCE|USE_RED_BLACK|USE_SHARED_MEMORY)) kernel_iterative = kernel_solve_red_black_thread_fence_shared_memory;
   if (KERNEL_FLAGS==(USE_THREAD_FENCE|USE_SHARED_MEMORY)) kernel_iterative = kernel_solve_thread_fence_shared_memory;
+  if (KERNEL_FLAGS==(USE_THREAD_FENCE|USE_SHARED_MEMORY|USE_NO_IDX)) kernel_iterative = kernel_solve_thread_fence_shared_memory_no_idx;
 
   if (expected_values != NULL) {
     if (is_kernel_iterative()) {

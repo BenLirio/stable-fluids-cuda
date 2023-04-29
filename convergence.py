@@ -1,6 +1,6 @@
 import glob
 import pickle
-from sfc import get_config, OUTPUT_PERFORMANCE, build, USE_SHARED_MEMORY, USE_THREAD_COARSENING, USE_NAIVE, USE_ROW_COARSENING, OUTPUT_SOLVE_ERROR, USE_RED_BLACK, USE_NO_BLOCK_SYNC, USE_THREAD_FENCE
+from sfc import get_config, OUTPUT_PERFORMANCE, build, USE_SHARED_MEMORY, USE_THREAD_COARSENING, USE_NAIVE, USE_ROW_COARSENING, OUTPUT_SOLVE_ERROR, USE_RED_BLACK, USE_NO_BLOCK_SYNC, USE_THREAD_FENCE, USE_NO_IDX
 from pathlib import Path
 from uuid import uuid4
 import shutil
@@ -20,10 +20,10 @@ if __name__ == '__main__':
 
   timings = []
 
-  ns = [64]
+  ns = [128]
 
   # for feature in [USE_NO_BLOCK_SYNC, USE_RED_BLACK, USE_THREAD_FENCE, USE_RED_BLACK|USE_THREAD_FENCE, USE_RED_BLACK|USE_THREAD_FENCE|USE_SHARED_MEMORY]:
-  for feature in [USE_RED_BLACK, USE_THREAD_FENCE|USE_SHARED_MEMORY]:
+  for feature in [USE_THREAD_FENCE|USE_SHARED_MEMORY|USE_NO_IDX, USE_THREAD_FENCE|USE_SHARED_MEMORY]:
 
     for n in ns:
       current_config = config.copy()
