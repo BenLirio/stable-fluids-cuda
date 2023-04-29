@@ -21,54 +21,36 @@ void output_gif_frame(float *colors, int i) {
   }
 }
 
-void run_with_kernel(state_t state) {
-  state_t device_state;
-  state_cuda_malloc(&device_state);
-
-  cudaMemcpy(device_state.colors->current, state.colors->current, N*sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(device_state.colors->previous, state.colors->previous, N*sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(device_state.x_velocities->current, state.x_velocities->current, N*sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(device_state.x_velocities->previous, state.x_velocities->previous, N*sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(device_state.y_velocities->current, state.y_velocities->current, N*sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(device_state.y_velocities->previous, state.y_velocities->previous, N*sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(device_state.pressures->current, state.pressures->current, N*sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(device_state.pressures->previous, state.pressures->previous, N*sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(device_state.divergences->current, state.divergences->current, N*sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(device_state.divergences->previous, state.divergences->previous, N*sizeof(float), cudaMemcpyHostToDevice);
-
-
-  float *colors = (float*)malloc(N*sizeof(float));
-  for (int step = 0; step < NUM_STEPS; step++) {
-    kernel_step(device_state, step);
-    if (OUTPUT&OUTPUT_GIF) {
-      cudaMemcpy(colors, device_state.colors->current, N*sizeof(float), cudaMemcpyDeviceToHost);
-      output_gif_frame(colors, step);
-    }
-  }
-  free(colors);
-
-  state_cuda_free(device_state);
-}
-
-void run_with_gold(state_t state) {
-  for (int step = 0; step < NUM_STEPS; step++) {
-    gold_step(state, step);
-    if (OUTPUT&OUTPUT_GIF)
-      output_gif_frame(state.colors->current, step);
-  }
-}
-
 int main() {
-  state_t state;
-  state_malloc(&state);
-  state_init(state);
+  state_t *p_state = (state_t*)malloc(sizeof(state_t));
+  float *colors;
 
   if (USE_GOLD) {
-    run_with_gold(state);
+    state_create(p_state);
+    colors = p_state->all_colors[0]->cur;
   } else {
-    run_with_kernel(state);
+    state_cuda_create(p_state);
+    if (OUTPUT&OUTPUT_GIF) colors = (float*)malloc(N*sizeof(float));
   }
 
-  state_free(state);
+  for (p_state->step = 0; p_state->step < NUM_STEPS; p_state->step++) {
+    if (USE_GOLD) {
+      gold_step(p_state);
+    } else {
+      kernel_step(p_state);
+      if (OUTPUT&OUTPUT_GIF)
+        CUDA_CHECK(cudaMemcpy(colors, p_state->all_colors[0]->cur, N*sizeof(float), cudaMemcpyDeviceToHost));
+    }
+    if (OUTPUT&OUTPUT_GIF)
+      output_gif_frame(colors, p_state->step);
+  }
+
+  if (USE_GOLD) {
+    state_destroy(p_state);
+  } else {
+    state_cuda_destroy(p_state);
+    if (OUTPUT&OUTPUT_GIF) free(colors);
+  }
+
   return 0;
 }

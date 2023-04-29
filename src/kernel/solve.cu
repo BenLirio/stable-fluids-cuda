@@ -164,13 +164,11 @@ __global__ void kernel_solve_red_black_thread_fence_shared_memory(float *base, f
   values[IDX2(idx)] = shared_values[ty][tx];
 }
 
-
-
 float kernel_solve_get_error(float *values, float *expected_values) {
   float *host_values = (float*)malloc(N*sizeof(float));
-  cudaMemcpy(host_values, values, N*sizeof(float), cudaMemcpyDeviceToHost);
+  CUDA_CHECK(cudaMemcpy(host_values, values, N*sizeof(float), cudaMemcpyDeviceToHost));
   float *host_expected_values = (float*)malloc(N*sizeof(float));
-  cudaMemcpy(host_expected_values, expected_values, N*sizeof(float), cudaMemcpyDeviceToHost);
+  CUDA_CHECK(cudaMemcpy(host_expected_values, expected_values, N*sizeof(float), cudaMemcpyDeviceToHost));
   float error = 0.0f;
   for (int i = 0; i < N; i++) {
     error += fabsf(host_values[i] - host_expected_values[i]);
@@ -195,29 +193,31 @@ bool is_host_iterative() {
   );
 }
 
+void (*kernel_iterative)(float*, float*, float, float, int);
+void (*host_iterative)(int, float*, float*, float, float);
+
 int kernel_solve(int step, float *base, float *values, float *expected_values, float factor, float divisor, int tags) {
+
+  if (KERNEL_FLAGS==USE_RED_BLACK) host_iterative = kernel_solve_red_black;
+  if (KERNEL_FLAGS==USE_NO_BLOCK_SYNC) kernel_iterative = kernel_solve_no_block_sync;
+  if (KERNEL_FLAGS==USE_THREAD_FENCE) kernel_iterative = kernel_solve_thread_fence;
+  if (KERNEL_FLAGS==(USE_THREAD_FENCE|USE_RED_BLACK)) kernel_iterative = kernel_solve_red_black_thread_fence;
+  if (KERNEL_FLAGS==(USE_THREAD_FENCE|USE_RED_BLACK|USE_SHARED_MEMORY)) kernel_iterative = kernel_solve_red_black_thread_fence_shared_memory;
+  if (KERNEL_FLAGS==(USE_THREAD_FENCE|USE_SHARED_MEMORY)) kernel_iterative = kernel_solve_thread_fence_shared_memory;
+
   if (expected_values != NULL) {
     if (is_kernel_iterative()) {
       int num_iterations;
       float *saved_base, *saved_values;
-      cudaMalloc(&saved_base, N*sizeof(float));
-      cudaMalloc(&saved_values, N*sizeof(float));
-      cudaMemcpy(saved_base, base, N*sizeof(float), cudaMemcpyDeviceToDevice);
-      cudaMemcpy(saved_values, values, N*sizeof(float), cudaMemcpyDeviceToDevice);
+      CUDA_CHECK(cudaMalloc(&saved_base, N*sizeof(float)));
+      CUDA_CHECK(cudaMalloc(&saved_values, N*sizeof(float)));
+      CUDA_CHECK(cudaMemcpy(saved_base, base, N*sizeof(float), cudaMemcpyDeviceToDevice));
+      CUDA_CHECK(cudaMemcpy(saved_values, values, N*sizeof(float), cudaMemcpyDeviceToDevice));
       for (num_iterations = 1; num_iterations <= MAX_CONVERGENCE_ITERATIONS; num_iterations++) {
-        cudaMemcpy(base, saved_base, N*sizeof(float), cudaMemcpyDeviceToDevice);
-        cudaMemcpy(values, saved_values, N*sizeof(float), cudaMemcpyDeviceToDevice);
-        if (KERNEL_FLAGS==USE_NO_BLOCK_SYNC)
-          kernel_solve_no_block_sync<<<GRID_DIM, BLOCK_DIM>>>(base, values, factor, divisor, num_iterations);
-        if (KERNEL_FLAGS==USE_THREAD_FENCE)
-          kernel_solve_thread_fence<<<GRID_DIM, BLOCK_DIM>>>(base, values, factor, divisor, num_iterations);
-        if (KERNEL_FLAGS==(USE_THREAD_FENCE|USE_RED_BLACK))
-          kernel_solve_red_black_thread_fence<<<GRID_DIM, BLOCK_DIM>>>(base, values, factor, divisor, num_iterations);
-        if (KERNEL_FLAGS==(USE_THREAD_FENCE|USE_RED_BLACK|USE_SHARED_MEMORY))
-          kernel_solve_red_black_thread_fence_shared_memory<<<GRID_DIM, BLOCK_DIM>>>(base, values, factor, divisor, num_iterations);
-        if (KERNEL_FLAGS==(USE_THREAD_FENCE|USE_SHARED_MEMORY))
-          kernel_solve_thread_fence_shared_memory<<<GRID_DIM, BLOCK_DIM>>>(base, values, factor, divisor, num_iterations);
-
+        CUDA_CHECK(cudaMemcpy(base, saved_base, N*sizeof(float), cudaMemcpyDeviceToDevice));
+        CUDA_CHECK(cudaMemcpy(values, saved_values, N*sizeof(float), cudaMemcpyDeviceToDevice));
+        kernel_iterative<<<GRID_DIM, BLOCK_DIM>>>(base, values, factor, divisor, num_iterations);
+        CUDA_CHECK(cudaPeekAtLastError());
         float error = kernel_solve_get_error(values, expected_values);
         if (OUTPUT_PERFORMANCE) {
           print_tags(tags|SOLVE_TAG);
@@ -230,8 +230,10 @@ int kernel_solve(int step, float *base, float *values, float *expected_values, f
       return num_iterations;
     } else if (is_host_iterative()) {
       for (int num_iterations = 1; num_iterations <= MAX_CONVERGENCE_ITERATIONS; num_iterations++) {
-        for (int red_black = 0; red_black < 2; red_black++)
-          kernel_solve_red_black<<<GRID_DIM, BLOCK_DIM>>>(red_black, base, values, factor, divisor);
+        for (int red_black = 0; red_black < 2; red_black++) {
+          host_iterative<<<GRID_DIM, BLOCK_DIM>>>(red_black, base, values, factor, divisor);
+          CUDA_CHECK(cudaPeekAtLastError());
+        }
 
         float error = kernel_solve_get_error(values, expected_values);
         if (OUTPUT_PERFORMANCE) {
@@ -240,24 +242,21 @@ int kernel_solve(int step, float *base, float *values, float *expected_values, f
         }
         if (error < EQ_THRESHOLD) return num_iterations;
       }
-      return MAX_CONVERGENCE_ITERATIONS;
     } else {
       fprintf(stderr, "Invalid kernel flags: %d\n", KERNEL_FLAGS);
       exit(EXIT_FAILURE);
     }
+    return MAX_CONVERGENCE_ITERATIONS;
   } else {
-    if (KERNEL_FLAGS == USE_NO_BLOCK_SYNC) {
-      kernel_solve_no_block_sync<<<GRID_DIM, BLOCK_DIM>>>(base, values, factor, divisor, GAUSS_SEIDEL_ITERATIONS);
-    } else if (KERNEL_FLAGS == USE_THREAD_FENCE) {
-      kernel_solve_thread_fence<<<GRID_DIM, BLOCK_DIM>>>(base, values, factor, divisor, GAUSS_SEIDEL_ITERATIONS);
-    } else if (KERNEL_FLAGS == (USE_THREAD_FENCE|USE_RED_BLACK)) {
-      kernel_solve_red_black_thread_fence<<<GRID_DIM, BLOCK_DIM>>>(base, values, factor, divisor, GAUSS_SEIDEL_ITERATIONS);
-    } else if (KERNEL_FLAGS == (USE_THREAD_FENCE|USE_SHARED_MEMORY)) {
-      kernel_solve_thread_fence_shared_memory<<<GRID_DIM, BLOCK_DIM>>>(base, values, factor, divisor, GAUSS_SEIDEL_ITERATIONS);
-    } else if (KERNEL_FLAGS == USE_RED_BLACK) {
-      for (int k = 0; k < GAUSS_SEIDEL_ITERATIONS; k++) {
-        for (int red_black = 0; red_black < 2; red_black++)
-          kernel_solve_red_black<<<GRID_DIM, BLOCK_DIM>>>(red_black, base, values, factor, divisor);
+    if (is_kernel_iterative()) {
+      kernel_iterative<<<GRID_DIM, BLOCK_DIM>>>(base, values, factor, divisor, GAUSS_SEIDEL_ITERATIONS);
+      CUDA_CHECK(cudaPeekAtLastError());
+    } else if (is_host_iterative()) {
+      for (int i = 0; i < GAUSS_SEIDEL_ITERATIONS; i++) {
+        for (int red_black = 0; red_black < 2; red_black++) {
+          host_iterative<<<GRID_DIM, BLOCK_DIM>>>(red_black, base, values, factor, divisor);
+          CUDA_CHECK(cudaPeekAtLastError());
+        }
       }
     } else {
       fprintf(stderr, "Invalid kernel flags: %d\n", KERNEL_FLAGS);

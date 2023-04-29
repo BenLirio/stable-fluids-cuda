@@ -1,97 +1,98 @@
 #include <util/state.h>
 #include <util/macros.h>
+#include <stdio.h>
 
 void state_property_step(state_property_t *state_property_pointer) {
-  float *temp = state_property_pointer->current;
-  state_property_pointer->current = state_property_pointer->previous;
-  state_property_pointer->previous = temp;
+  float *temp = state_property_pointer->cur;
+  state_property_pointer->cur = state_property_pointer->prev;
+  state_property_pointer->prev = temp;
 }
 
-void state_property_malloc(state_property_t *property_pointer) {
-  property_pointer->current = (float*)malloc(N*sizeof(float));
-  property_pointer->previous = (float*)malloc(N*sizeof(float));
-}
-void state_property_free(state_property_t property) {
-  free(property.current);
-  free(property.previous);
-}
-void state_property_cuda_malloc(state_property_t *state_property) {
-  cudaMalloc(&state_property->current, N*sizeof(float));
-  cudaMalloc(&state_property->previous, N*sizeof(float));
-}
-void state_property_cuda_free(state_property_t state_property) {
-  cudaFree(state_property.current);
-  cudaFree(state_property.previous);
-}
+void state_create(state_t *p_state) {
 
-void state_property_init(state_property_t property) {
-  for (int i = 0; i < N; i++) {
-    property.current[i] = 0.0;
-    property.previous[i] = 0.0;
+  p_state->step = 0;
+
+  CUDA_CHECK(cudaEventCreate(&p_state->start));
+
+  for (int i = 0; i < NUM_COLORS; i++) {
+    p_state->all_colors[i] = (state_property_t*)malloc(sizeof(state_property_t));
+    p_state->all_colors[i]->cur = (float*)malloc(N*sizeof(float));
+    p_state->all_colors[i]->prev = (float*)malloc(N*sizeof(float));
+    for (int j = 0; j < N; j++) {
+      p_state->all_colors[i]->cur[j] = 0.0;
+      p_state->all_colors[i]->prev[j] = 0.0;
+    }
+  }
+
+  for (int i = 0; i < NUM_VELOCITY_COMPONENTS; i++) {
+    p_state->all_velocities[i] = (state_property_t*)malloc(sizeof(state_property_t));
+    p_state->all_velocities[i]->cur = (float*)malloc(N*sizeof(float));
+    p_state->all_velocities[i]->prev = (float*)malloc(N*sizeof(float));
+    for (int j = 0; j < N; j++) {
+      p_state->all_velocities[i]->cur[j] = 0.0;
+      p_state->all_velocities[i]->prev[j] = 0.0;
+    }
+
   }
 }
-void state_property_randomize(state_property_t state_property) {
-  for (int i = 0; i < N; i++) {
-    state_property.current[i] = (float)rand()/(float)RAND_MAX;
-    state_property.previous[i] = (float)rand()/(float)RAND_MAX;
+
+void state_cuda_create(state_t *p_state) {
+
+  p_state->step = 0;
+
+  CUDA_CHECK(cudaEventCreate(&p_state->start));
+
+  for (int i = 0; i < NUM_COLORS; i++) {
+    p_state->all_colors[i] = (state_property_t*)malloc(sizeof(state_property_t));
+    CUDA_CHECK(cudaMalloc(&p_state->all_colors[i]->cur, N*sizeof(float)));
+    CUDA_CHECK(cudaMalloc(&p_state->all_colors[i]->prev, N*sizeof(float)));
+    CUDA_CHECK(cudaMemset(p_state->all_colors[i]->cur, 0, N*sizeof(float)));
+    CUDA_CHECK(cudaMemset(p_state->all_colors[i]->prev, 0, N*sizeof(float)));
+  }
+
+  for (int i = 0; i < NUM_VELOCITY_COMPONENTS; i++) {
+    p_state->all_velocities[i] = (state_property_t*)malloc(sizeof(state_property_t));
+    CUDA_CHECK(cudaMalloc(&p_state->all_velocities[i]->cur, N*sizeof(float)));
+    CUDA_CHECK(cudaMalloc(&p_state->all_velocities[i]->prev, N*sizeof(float)));
+    CUDA_CHECK(cudaMemset(p_state->all_velocities[i]->cur, 0, N*sizeof(float)));
+    CUDA_CHECK(cudaMemset(p_state->all_velocities[i]->prev, 0, N*sizeof(float)));
   }
 }
 
-void state_malloc(state_t *state_pointer) {
-  state_pointer->colors = (state_property_t*)malloc(sizeof(state_property_t));
-  state_pointer->x_velocities = (state_property_t*)malloc(sizeof(state_property_t));
-  state_pointer->y_velocities = (state_property_t*)malloc(sizeof(state_property_t));
-  state_pointer->divergences = (state_property_t*)malloc(sizeof(state_property_t));
-  state_pointer->pressures = (state_property_t*)malloc(sizeof(state_property_t));
-  state_property_malloc(state_pointer->colors);
-  state_property_malloc(state_pointer->x_velocities);
-  state_property_malloc(state_pointer->y_velocities);
-  state_property_malloc(state_pointer->divergences);
-  state_property_malloc(state_pointer->pressures);
-}
-void state_free(state_t state) {
-  state_property_free(*state.colors);
-  state_property_free(*state.x_velocities);
-  state_property_free(*state.y_velocities);
-  state_property_free(*state.divergences);
-  state_property_free(*state.pressures);
-  free(state.colors);
-  free(state.x_velocities);
-  free(state.y_velocities);
-  free(state.divergences);
-  free(state.pressures);
-}
-void state_cuda_malloc(state_t *state_pointer) {
-  state_pointer->colors = (state_property_t*)malloc(sizeof(state_property_t));
-  state_pointer->x_velocities = (state_property_t*)malloc(sizeof(state_property_t));
-  state_pointer->y_velocities = (state_property_t*)malloc(sizeof(state_property_t));
-  state_pointer->divergences = (state_property_t*)malloc(sizeof(state_property_t));
-  state_pointer->pressures = (state_property_t*)malloc(sizeof(state_property_t));
-  state_property_cuda_malloc(state_pointer->colors);
-  state_property_cuda_malloc(state_pointer->x_velocities);
-  state_property_cuda_malloc(state_pointer->y_velocities);
-  state_property_cuda_malloc(state_pointer->divergences);
-  state_property_cuda_malloc(state_pointer->pressures);
-}
-void state_cuda_free(state_t state) {
-  state_property_cuda_free(*state.colors);
-  state_property_cuda_free(*state.x_velocities);
-  state_property_cuda_free(*state.y_velocities);
-  state_property_cuda_free(*state.divergences);
-  state_property_cuda_free(*state.pressures);
-  free(state.colors);
-  free(state.x_velocities);
-  free(state.y_velocities);
-  free(state.divergences);
-  free(state.pressures);
+void state_destroy(state_t *p_state) {
+
+  cudaEventDestroy(p_state->start);
+
+  for (int i = 0; i < NUM_COLORS; i++) {
+    free(p_state->all_colors[i]->cur);
+    free(p_state->all_colors[i]->prev);
+    free(p_state->all_colors[i]);
+  }
+
+  for (int i = 0; i < NUM_VELOCITY_COMPONENTS; i++) {
+    free(p_state->all_velocities[i]->cur);
+    free(p_state->all_velocities[i]->prev);
+    free(p_state->all_velocities[i]);
+  }
+
+  free(p_state);
 }
 
-void state_init(state_t state) {
-  state_property_init(*state.colors);
-  state_property_init(*state.x_velocities);
-  state_property_init(*state.y_velocities);
-  state_property_init(*state.divergences);
-  state_property_init(*state.pressures);
-  if (RANDOMIZE_COLORS)
-    state_property_randomize(*state.colors);
+void state_cuda_destroy(state_t *p_state) {
+
+  cudaEventDestroy(p_state->start);
+
+  for (int i = 0; i < NUM_COLORS; i++) {
+    cudaFree(p_state->all_colors[i]->cur);
+    cudaFree(p_state->all_colors[i]->prev);
+    free(p_state->all_colors[i]);
+  }
+
+  for (int i = 0; i < NUM_VELOCITY_COMPONENTS; i++) {
+    cudaFree(p_state->all_velocities[i]->cur);
+    cudaFree(p_state->all_velocities[i]->prev);
+    free(p_state->all_velocities[i]);
+  }
+
+  free(p_state);
 }

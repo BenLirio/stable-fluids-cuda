@@ -7,8 +7,8 @@ void performance_malloc(performance_t **performance_ptr_ptr) {
   if (!(OUTPUT&OUTPUT_PERFORMANCE)) return;
   *performance_ptr_ptr = (performance_t *)malloc(sizeof(performance_t));
   performance_t *performance_ptr = *performance_ptr_ptr;
-  cudaEventCreate(&performance_ptr->cuda_event_start);
-  cudaEventCreate(&performance_ptr->cuda_event_stop);
+  CUDA_CHECK(cudaEventCreate(&performance_ptr->cuda_event_start));
+  CUDA_CHECK(cudaEventCreate(&performance_ptr->cuda_event_stop));
 }
 
 void performance_free(performance_t *performance_ptr) {

@@ -2,6 +2,7 @@
 #define STABLE_FLUIDS_MACROS_H
 
 #include <cuda_runtime.h>
+#include <stdio.h>
 
 #ifndef NUM_STEPS
 #define NUM_STEPS 120
@@ -43,6 +44,8 @@
 #define KERNEL_FLAGS 0
 #endif
 
+#define NUM_COLORS 3
+#define NUM_VELOCITY_COMPONENTS 2
 #define SWAP(x0, x) {float *tmp = x0; x0 = x; x = tmp;}
 #define NUM_NEIGHBORS 4
 #define ASSERTIONS_ENABLED 0
@@ -61,12 +64,12 @@
 #define RED 0
 #define BLACK 1
 
-#define KERNEL_ERROR_CHECK() { \
-    cudaError_t __stable_fluids_cuda_err = cudaGetLastError(); \
-    if (__stable_fluids_cuda_err != cudaSuccess) { \
-        printf("CUDA error: %s\n", cudaGetErrorString(__stable_fluids_cuda_err)); \
-        exit(1); \
-    } \
+#define CUDA_CHECK(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line) {
+   if (code != cudaSuccess) {
+      fprintf(stderr,"CUDA error: %s %s %d\n", cudaGetErrorString(code), file, line);
+      exit(code);
+   }
 }
 
 // OUTPUT FLAGS

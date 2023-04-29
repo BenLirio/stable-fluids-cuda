@@ -134,8 +134,8 @@ CLEANUP:
 void gold_solve_wrapper(float *d_dst, float *d_bs, float *d_xs, float factor, float divisor) {
   float *bs = (float*)malloc(N*sizeof(float));
   float *xs = (float*)malloc(N*sizeof(float));
-  cudaMemcpy(bs, d_bs, N*sizeof(float), cudaMemcpyDeviceToHost);
-  cudaMemcpy(xs, d_xs, N*sizeof(float), cudaMemcpyDeviceToHost);
+  CUDA_CHECK(cudaMemcpy(bs, d_bs, N*sizeof(float), cudaMemcpyDeviceToHost));
+  CUDA_CHECK(cudaMemcpy(xs, d_xs, N*sizeof(float), cudaMemcpyDeviceToHost));
   gold_solve_conjugate_gradient(bs, xs, factor, divisor);
-  cudaMemcpy(d_dst, xs, N*sizeof(float), cudaMemcpyHostToDevice);
+  CUDA_CHECK(cudaMemcpy(d_dst, xs, N*sizeof(float), cudaMemcpyHostToDevice));
 }
