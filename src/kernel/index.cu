@@ -14,37 +14,47 @@
 #include <util/log.cuh>
 
 void kernel_color_step(state_t *state) {
+  int log_id;
 
   state_property_t *c = state->all_colors[0];
   state_property_t *x = state->all_velocities[0];
   state_property_t *y = state->all_velocities[1];
 
-  if (USE_SOURCE_COLORS) kernel_source_colors<<<GRID_DIM, BLOCK_DIM>>>(c->prev, c->cur);
-  CUDA_CHECK(cudaPeekAtLastError());
+  if (USE_SOURCE_COLORS) {
+    log_id = log(state, rand(), SOURCE_TAG|COLOR_TAG);
+    kernel_source_colors<<<GRID_DIM, BLOCK_DIM>>>(c->prev, c->cur);
+    CUDA_CHECK(cudaPeekAtLastError());
+    log(state, log_id, SOURCE_TAG|COLOR_TAG);
 
-  if (USE_SINK_COLORS) kernel_sink_colors<<<GRID_DIM, BLOCK_DIM>>>(c->prev, c->cur);
-  CUDA_CHECK(cudaPeekAtLastError());
+  }
+
+  if (USE_SINK_COLORS) {
+    log_id = log(state, rand(), SINK_TAG|COLOR_TAG);
+    kernel_sink_colors<<<GRID_DIM, BLOCK_DIM>>>(c->prev, c->cur);
+    CUDA_CHECK(cudaPeekAtLastError());
+    log(state, log_id, SINK_TAG|COLOR_TAG);
+  }
 
   if (USE_DENSITY_DIFFUSE) {
     state_property_step(c);
-    int id = log(state, rand(), DIFFUSE_TAG|COLOR_TAG);
+    log_id = log(state, rand(), DIFFUSE_TAG|COLOR_TAG);
     kernel_diffuse_wrapper(state, c->prev, c->cur, DIFFUSION_RATE);
-    log(state, id, DIFFUSE_TAG|COLOR_TAG);
+    log(state, log_id, DIFFUSE_TAG|COLOR_TAG);
   }
 
   if (USE_DENSITY_ADVECT) {
     state_property_step(c);
-    int id = log(state, rand(), ADVECT_TAG|COLOR_TAG);
+    log_id = log(state, rand(), ADVECT_TAG|COLOR_TAG);
     kernel_advect<<<GRID_DIM, BLOCK_DIM>>>(c->prev, c->cur, x->cur, y->cur);
     CUDA_CHECK(cudaPeekAtLastError());
-    log(state, id, ADVECT_TAG|COLOR_TAG);
+    log(state, log_id, ADVECT_TAG|COLOR_TAG);
   }
 
 }
 
 void kernel_velocity_step(state_t *state) {
 
-  int id;
+  int log_id;
   int step = state->step;
   state_property_t *x = state->all_velocities[0];
   state_property_t *y = state->all_velocities[1];
@@ -53,45 +63,53 @@ void kernel_velocity_step(state_t *state) {
   CUDA_CHECK(cudaMalloc(&d, N*sizeof(float)));
 
 
-  if (USE_SOURCE_VELOCITIES) kernel_source_velocities<<<GRID_DIM, BLOCK_DIM>>>(x->prev, y->prev, x->cur, y->cur, step);
-  CUDA_CHECK(cudaPeekAtLastError());
+  if (USE_SOURCE_VELOCITIES) {
+    log_id = log(state, rand(), SOURCE_TAG|VELOCITY_TAG);
+    kernel_source_velocities<<<GRID_DIM, BLOCK_DIM>>>(x->prev, y->prev, x->cur, y->cur, step);
+    CUDA_CHECK(cudaPeekAtLastError());
+    log(state, log_id, SOURCE_TAG|VELOCITY_TAG);
+  }
 
-  if (USE_SINK_VELOCITIES) kernel_sink_velocities<<<GRID_DIM, BLOCK_DIM>>>(x->prev, y->prev, x->cur, y->cur);
-  CUDA_CHECK(cudaPeekAtLastError());
+  if (USE_SINK_VELOCITIES) {
+    log_id = log(state, rand(), SINK_TAG|VELOCITY_TAG);
+    kernel_sink_velocities<<<GRID_DIM, BLOCK_DIM>>>(x->prev, y->prev, x->cur, y->cur);
+    CUDA_CHECK(cudaPeekAtLastError());
+    log(state, log_id, SINK_TAG|VELOCITY_TAG);
+  }
 
   if (USE_VELOCITY_DIFFUSE) {
     state_property_step(x);
-    id = log(state, rand(), DIFFUSE_TAG|VELOCITY_TAG);
+    log_id = log(state, rand(), DIFFUSE_TAG|VELOCITY_TAG);
     kernel_diffuse_wrapper(state, x->prev, x->cur, VISCOSITY);
-    log(state, id, DIFFUSE_TAG|VELOCITY_TAG);
+    log(state, log_id, DIFFUSE_TAG|VELOCITY_TAG);
 
     state_property_step(y);
-    id = log(state, rand(), DIFFUSE_TAG|VELOCITY_TAG);
+    log_id = log(state, rand(), DIFFUSE_TAG|VELOCITY_TAG);
     kernel_diffuse_wrapper(state, y->prev, y->cur, VISCOSITY);
-    log(state, id, DIFFUSE_TAG|VELOCITY_TAG);
+    log(state, log_id, DIFFUSE_TAG|VELOCITY_TAG);
 
-    id = log(state, rand(), PROJECT_TAG);
+    log_id = log(state, rand(), PROJECT_TAG);
     kernel_project_wrapper(state, x->cur, y->cur, p, d);
-    log(state, id, PROJECT_TAG);
+    log(state, log_id, PROJECT_TAG);
   }
 
   if (USE_VELOCITY_ADVECT) {
     state_property_step(x);
     state_property_step(y);
 
-    id = log(state, rand(), ADVECT_TAG|VELOCITY_TAG);
+    log_id = log(state, rand(), ADVECT_TAG|VELOCITY_TAG);
     kernel_advect<<<GRID_DIM, BLOCK_DIM>>>(x->prev, x->cur, x->prev, y->prev);
     CUDA_CHECK(cudaPeekAtLastError());
-    log(state, id, ADVECT_TAG|VELOCITY_TAG);
+    log(state, log_id, ADVECT_TAG|VELOCITY_TAG);
 
-    id = log(state, rand(), ADVECT_TAG|VELOCITY_TAG);
+    log_id = log(state, rand(), ADVECT_TAG|VELOCITY_TAG);
     kernel_advect<<<GRID_DIM, BLOCK_DIM>>>(y->prev, y->cur, x->prev, y->prev);
     CUDA_CHECK(cudaPeekAtLastError());
-    log(state, id, ADVECT_TAG|VELOCITY_TAG);
+    log(state, log_id, ADVECT_TAG|VELOCITY_TAG);
 
-    id = log(state, rand(), PROJECT_TAG);
+    log_id = log(state, rand(), PROJECT_TAG);
     kernel_project_wrapper(state, x->cur, y->cur, p, d);
-    log(state, id, PROJECT_TAG);
+    log(state, log_id, PROJECT_TAG);
   }
 
   cudaFree(p);
@@ -99,6 +117,17 @@ void kernel_velocity_step(state_t *state) {
 }
 
 void kernel_step(state_t *state) {
+  int log_id;
+
+  log_id = log(state, rand(), COLOR_TAG);
+  state_push(state);
   kernel_color_step(state);
+  state_pop(state);
+  log(state, log_id, COLOR_TAG);
+
+  log_id = log(state, rand(), VELOCITY_TAG);
+  state_push(state);
   kernel_velocity_step(state);
+  state_pop(state);
+  log(state, log_id, VELOCITY_TAG);
 }

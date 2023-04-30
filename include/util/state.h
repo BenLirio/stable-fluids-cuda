@@ -10,6 +10,7 @@ struct log_entry {
   int tags;
   float error;
   int guass_step;
+  int depth;
 };
 typedef struct log_entry log_entry_t;
 
@@ -28,6 +29,7 @@ struct state {
   log_entry_t log_buffer[LOG_BUFFER_SIZE];
   int log_buffer_index;
   int log_buffer_filled;
+  int depth;
   state_property_t *all_colors[NUM_COLORS];
   state_property_t *all_velocities[NUM_VELOCITY_COMPONENTS];
 };
@@ -39,6 +41,9 @@ void state_destroy(state_t *state);
 
 void state_cuda_create(state_t *state);
 void state_cuda_destroy(state_t *state);
+
+void state_push(state_t *state);
+void state_pop(state_t *state);
 
 
 #endif // STABLE_FLUIDS_CUDA_STATE_H

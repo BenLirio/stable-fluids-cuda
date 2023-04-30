@@ -189,7 +189,7 @@ def create_gauss_solve_error_graph(timings, kernel_flags=None):
       # errors = [ x['VALUES']['ERROR'] for x in kernel_flag_function_timings ]
 
       
-      label = f'{sfc.string_of_kernel_flag(kernel_flag)} ({kernel_function_name})'
+      label = f'{sfc.string_of_kernel_flags(kernel_flag)} ({kernel_function_name})'
       ax.plot(gauss_steps, errors, label=label)
       # ax.plot(times, errors, label=label)
 

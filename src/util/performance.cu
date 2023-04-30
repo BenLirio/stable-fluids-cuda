@@ -29,6 +29,9 @@ void print_tags(int tags) {
   if (tags&COLOR_TAG)       printf(COLOR_TAG_STRING);
   if (tags&VELOCITY_TAG)    printf(VELOCITY_TAG_STRING);
   if (tags&SOLVE_TAG)       printf(SOLVE_TAG_STRING);
+  if (tags&STEP_TAG)        printf(STEP_TAG_STRING);
+  if (tags&SOURCE_TAG)      printf(SOURCE_TAG_STRING);
+  if (tags&SINK_TAG)        printf(SINK_TAG_STRING);
 }
 
 void print_step(int step) {

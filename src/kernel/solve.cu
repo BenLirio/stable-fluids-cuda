@@ -264,7 +264,7 @@ int kernel_solve(state_t *state, float *base, float *values, float *expected_val
         kernel_iterative<<<GRID_DIM, BLOCK_DIM>>>(base, values, factor, divisor, num_iterations);
         CUDA_CHECK(cudaPeekAtLastError());
         float error = kernel_solve_get_error(values, expected_values);
-        log(state, rand(), tags|SOLVE_TAG, error, num_iterations);
+        log_with_error_and_gauss_step(state, rand(), tags|SOLVE_TAG, error, num_iterations);
         if (error < EQ_THRESHOLD) break;
       }
       cudaFree(saved_base);
@@ -279,7 +279,7 @@ int kernel_solve(state_t *state, float *base, float *values, float *expected_val
 
         float error = kernel_solve_get_error(values, expected_values);
         if (OUTPUT_PERFORMANCE) {
-          log(state, rand(), tags|SOLVE_TAG, error, num_iterations);
+          log_with_error_and_gauss_step(state, rand(), tags|SOLVE_TAG, error, num_iterations);
         }
         if (error < EQ_THRESHOLD) return num_iterations;
       }

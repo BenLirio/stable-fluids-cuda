@@ -23,6 +23,7 @@ void output_gif_frame(float *colors, int i) {
 }
 
 int main() {
+  int log_id;
   state_t *state = (state_t*)malloc(sizeof(state_t));
   float *colors;
 
@@ -36,15 +37,18 @@ int main() {
 
   for (state->step = 0; state->step < NUM_STEPS; state->step++) {
     empty_log_buffer(state);
-    if (USE_GOLD) {
-      gold_step(state);
-    } else {
-      kernel_step(state);
-      if (OUTPUT&OUTPUT_GIF)
-        CUDA_CHECK(cudaMemcpy(colors, state->all_colors[0]->cur, N*sizeof(float), cudaMemcpyDeviceToHost));
-    }
-    if (OUTPUT&OUTPUT_GIF)
+
+    log_id = log(state, rand(), STEP_TAG);
+    state_push(state);
+    if (USE_GOLD) gold_step(state);
+    else kernel_step(state);
+    state_pop(state);
+    log(state, log_id, STEP_TAG);
+
+    if (OUTPUT&OUTPUT_GIF) {
+      CUDA_CHECK(cudaMemcpy(colors, state->all_colors[0]->cur, N*sizeof(float), cudaMemcpyDeviceToHost));
       output_gif_frame(colors, state->step);
+    }
   }
 
   if (USE_GOLD) {

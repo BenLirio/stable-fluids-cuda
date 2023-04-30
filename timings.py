@@ -9,25 +9,16 @@ from sfc import get_config, OUTPUT_PERFORMANCE, build, USE_SHARED_MEMORY, USE_TH
 from pathlib import Path
 from uuid import uuid4
 import shutil
+import sfc
 
-tags = [
-  'TOTAL',
-  'ADVECT',
-  'DIFFUSE',
-  'PROJECT',
-  'COLOR',
-  'VELOCITY',
-  'SOLVE',
-]
+TIMING_DIR = 'timings'
 
 def parse_timing_line(line):
   fields = {
-    'TAGS': [],
-    'VALUES': {}
   }
-  for tag in tags:
+  for tag in sfc.tags:
     if f'[{tag}]' in line:
-      fields['TAGS'].append(tag)
+      fields[tag] = True
 
   patterns = [
     [r'\[time=(\d+\.\d+)\]', float, 'TIME'],
@@ -35,12 +26,13 @@ def parse_timing_line(line):
     [r'\[step=(\d+)\]', int, 'STEP'],
     [r'\[gauss_step=(\d+)\]', int, 'GAUSS_STEP'],
     [r'\[id=(\d+)\]', int, 'ID'],
+    [r'\[depth=(\d+)\]', int, 'DEPTH'],
   ]
   for [pattern, typecast, label] in patterns:
     match = re.search(pattern, line)
     if match:
       value = typecast(match.group(1))
-      fields['VALUES'][label] = value
+      fields[label] = value
 
   return [fields]
 
@@ -52,6 +44,12 @@ def parse_timings(performance_output):
 
 
 def generate_timings(config):
+  config_hash = sfc.hash_of_config(config)
+  if os.path.exists(f'{TIMING_DIR}/{config_hash}.pkl'):
+    print(f'Found existing timings for {config}')
+    with open(f'{TIMING_DIR}/{config_hash}.pkl', 'rb') as performance_file:
+      return pickle.load(performance_file)
+
   with TemporaryDirectory() as build_dir:
     build(config, build_dir)
     stable_fluids_process = run([
@@ -61,9 +59,24 @@ def generate_timings(config):
 
     timings = parse_timings(stable_fluids_process.stdout)
     for timing in timings:
-      timing['VALUES']['WIDTH'] = config['WIDTH']
-      timing['VALUES']['HEIGHT'] = config['HEIGHT']
-      timing['VALUES']['GAUSS_SEIDEL_ITERATIONS'] = config['GAUSS_SEIDEL_ITERATIONS']
-      timing['VALUES']['KERNEL_FLAGS'] = config['KERNEL_FLAGS']
+      timing['WIDTH'] = config['WIDTH']
+      timing['HEIGHT'] = config['HEIGHT']
+      timing['GAUSS_SEIDEL_ITERATIONS'] = config['GAUSS_SEIDEL_ITERATIONS']
+      timing['KERNEL_FLAGS'] = config['KERNEL_FLAGS']
+    
+    assert len(timings) > 0, 'No timings found'
 
+    with open(f'{TIMING_DIR}/{config_hash}.pkl', 'wb') as performance_file:
+      pickle.dump(timings, performance_file)
     return timings
+
+
+def as_log_pairs(logs):
+  log_map = {}
+  for log in logs:
+    log_map[log['ID']] = log_map.get(log['ID'], []) + [log]
+  log_pairs = list(log_map.values())
+  for log_pair in log_pairs:
+    assert len(log_pair) == 2
+    log_pair.sort(key=lambda log: log['TIME'])
+  return log_pairs

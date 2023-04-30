@@ -10,20 +10,14 @@ from timings import generate_timings
 
 output_dir = 'timings'
 if __name__ == '__main__':
-  Path(f'{output_dir}/old').mkdir(parents=True, exist_ok=True)
-
-  for path in glob.glob(f'{output_dir}/*.pkl'):
-    uid = uuid4().hex
-    shutil.move(path, f'{output_dir}/old/{uid}.pkl')
 
   config = get_config(output=OUTPUT_PERFORMANCE|OUTPUT_SOLVE_ERROR)
 
   timings = []
 
-  ns = [128]
+  ns = [16]
 
-  # for feature in [USE_NO_BLOCK_SYNC, USE_RED_BLACK, USE_THREAD_FENCE, USE_RED_BLACK|USE_THREAD_FENCE, USE_RED_BLACK|USE_THREAD_FENCE|USE_SHARED_MEMORY]:
-  for feature in [USE_THREAD_FENCE|USE_SHARED_MEMORY|USE_NO_IDX, USE_THREAD_FENCE|USE_SHARED_MEMORY]:
+  for feature in [USE_THREAD_FENCE|USE_SHARED_MEMORY]:
 
     for n in ns:
       current_config = config.copy()
@@ -33,9 +27,6 @@ if __name__ == '__main__':
       current_config['KERNEL_FLAGS'] |= feature
 
       timings += generate_timings(current_config)
-
-  with open(f'{output_dir}/timings.pkl', 'wb') as performance_file:
-    pickle.dump(timings, performance_file)
 
   exit(0)
 

@@ -12,6 +12,7 @@ void _state_create(state_t *state) {
   state->step = 0;
   state->log_buffer_filled = 0;
   state->log_buffer_index = 0;
+  state->depth = 0;
   CUDA_CHECK(cudaEventCreate(&state->start));
   CUDA_CHECK(cudaEventRecord(state->start));
   for (int i = 0; i < NUM_COLORS; i++) {
@@ -100,4 +101,12 @@ void state_cuda_destroy(state_t *state) {
   }
 
   free(state);
+}
+
+void state_push(state_t *state) {
+  state->depth++;
+}
+
+void state_pop(state_t *state) {
+  state->depth--;
 }

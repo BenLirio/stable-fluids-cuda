@@ -4,7 +4,7 @@
 #include <cuda_runtime.h>
 #include <util/performance.cuh>
 
-int log(state_t *state, int id, int tags, float error, int guass_step) {
+int _log(state_t *state, int id, int tags, float error, int guass_step, int depth) {
   if (!(OUTPUT&OUTPUT_PERFORMANCE)) return 0;
   cudaEvent_t stop;
   CUDA_CHECK(cudaEventCreate(&stop));
@@ -19,17 +19,20 @@ int log(state_t *state, int id, int tags, float error, int guass_step) {
     .time = ellapsed_time,
     .tags = tags,
     .error = error,
-    .guass_step = guass_step
+    .guass_step = guass_step,
+    .depth = state->depth
   };
   return id;
 }
 
-int log (state_t *state, int id, int tags, float error) {
-  return log(state, id, tags, error, 0);
+int log_with_error_and_gauss_step(state_t *state, int id, int tags, float error, int guass_step) {
+  return _log(state, id, tags, error, guass_step, 0);
 }
-
+int log_with_error(state_t *state, int id, int tags, float error) {
+  return _log(state, id, tags, error, 0, 0);
+}
 int log(state_t *state, int id, int tags) {
-  return log(state, id, tags, 0.0f);
+  return _log(state, id, tags, 0.0f, 0, 0);
 }
 
 void empty_log_buffer(state_t *state) {
@@ -42,6 +45,6 @@ void empty_log_buffer(state_t *state) {
     int idx = state->log_buffer_index++ % LOG_BUFFER_SIZE;
     log_entry_t entry = state->log_buffer[idx];
     print_tags(entry.tags);
-    printf("[time=%f][step=%d][id=%d][error=%f][gauss_step=%d]\n", entry.time, entry.step, entry.id, entry.error, entry.guass_step);
+    printf("[time=%f][step=%d][id=%d][error=%f][gauss_step=%d][depth=%d]\n", entry.time, entry.step, entry.id, entry.error, entry.guass_step, entry.depth);
   }
 }

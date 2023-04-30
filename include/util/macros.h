@@ -110,6 +110,12 @@ inline void gpuAssert(cudaError_t code, const char *file, int line) {
 #define VELOCITY_TAG_STRING "[VELOCITY]"
 #define SOLVE_TAG (1<<9)
 #define SOLVE_TAG_STRING "[SOLVE]"
+#define STEP_TAG (1<<10)
+#define STEP_TAG_STRING "[STEP]"
+#define SOURCE_TAG (1<<11)
+#define SOURCE_TAG_STRING "[SOURCE]"
+#define SINK_TAG (1<<12)
+#define SINK_TAG_STRING "[SINK]"
 
 #define MAX_CONVERGENCE_ITERATIONS 400
 #define CHECK_CONVERGENCE_EVERY 100
