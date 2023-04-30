@@ -1,6 +1,7 @@
 #ifndef STABLE_FLUIDS_CUDA_STATE_H
 #define STABLE_FLUIDS_CUDA_STATE_H
 #include <util/macros.h>
+#include <gif_lib.h>
 
 // defined here to avoid cyclic dependency
 struct log_entry {
@@ -30,6 +31,8 @@ struct state {
   int log_buffer_index;
   int log_buffer_filled;
   int depth;
+  GifFileType *gif_dst;
+  GifColorType gif_palette[NUM_SHADES];
   state_property_t *all_colors[NUM_COLORS];
   state_property_t *all_velocities[NUM_VELOCITY_COMPONENTS];
 };

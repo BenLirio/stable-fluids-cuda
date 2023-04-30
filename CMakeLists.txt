@@ -19,6 +19,12 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
+FetchContent_Declare(
+  giflib
+  URL https://sourceforge.net/projects/giflib/files/giflib-5.2.1.tar.gz
+)
+FetchContent_MakeAvailable(giflib)
+
 set(COMPILE_PARAMETERS
   NUM_STEPS
   WIDTH

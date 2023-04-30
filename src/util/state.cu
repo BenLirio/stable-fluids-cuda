@@ -1,6 +1,11 @@
 #include <util/state.h>
 #include <util/macros.h>
 #include <stdio.h>
+#include <gif_lib.h>
+
+int _write_to_stdout(GifFileType *gif_file, const GifByteType *data, int length) {
+  return fwrite(data, 1, length, stdout);
+}
 
 void state_property_step(state_property_t *state_property_pointer) {
   float *temp = state_property_pointer->cur;
@@ -9,6 +14,25 @@ void state_property_step(state_property_t *state_property_pointer) {
 }
 
 void _state_create(state_t *state) {
+  if (OUTPUT&OUTPUT_GIF) {
+    int error;
+    state->gif_dst = EGifOpen(NULL, _write_to_stdout, &error);
+    if (!state->gif_dst) {
+      fprintf(stderr, "EGifOpenFileName() failed - %d\n", error);
+      exit(EXIT_FAILURE);
+    }
+    for (int i = 0; i < NUM_SHADES; i++) {
+      state->gif_palette[i].Red = i;
+      state->gif_palette[i].Green = i;
+      state->gif_palette[i].Blue = i;
+    }
+    state->gif_dst->SWidth = OUTPUT_WIDTH;
+    state->gif_dst->SHeight = OUTPUT_HEIGHT;
+    state->gif_dst->SColorResolution = 8;
+    state->gif_dst->SBackGroundColor = 0;
+    state->gif_dst->SColorMap = GifMakeMapObject(NUM_SHADES, state->gif_palette);
+  }
+
   state->step = 0;
   state->log_buffer_filled = 0;
   state->log_buffer_index = 0;
@@ -65,42 +89,56 @@ void state_cuda_create(state_t *state) {
   }
 }
 
-void state_destroy(state_t *state) {
-
+void _state_destroy(state_t *state) {
   cudaEventDestroy(state->start);
+  for (int i = 0; i < NUM_COLORS; i++) {
+    free(state->all_colors[i]);
+  }
+  for (int i = 0; i < NUM_VELOCITY_COMPONENTS; i++) {
+    free(state->all_velocities[i]);
+  }
+  free(state);
+}
+
+void _state_write_gif(state_t *state) {
+  if (!(OUTPUT&OUTPUT_GIF)) return;
+  int error;
+  if (EGifSpew(state->gif_dst) == GIF_ERROR) {
+    fprintf(stderr, "EGifSpew() failed - %d\n", state->gif_dst->Error);
+    EGifCloseFile(state->gif_dst, &error);
+    exit(EXIT_FAILURE);
+  }
+}
+
+void state_destroy(state_t *state) {
+  _state_write_gif(state);
 
   for (int i = 0; i < NUM_COLORS; i++) {
     free(state->all_colors[i]->cur);
     free(state->all_colors[i]->prev);
-    free(state->all_colors[i]);
   }
 
   for (int i = 0; i < NUM_VELOCITY_COMPONENTS; i++) {
     free(state->all_velocities[i]->cur);
     free(state->all_velocities[i]->prev);
-    free(state->all_velocities[i]);
   }
-
-  free(state);
+  _state_destroy(state);
 }
 
 void state_cuda_destroy(state_t *state) {
-
-  cudaEventDestroy(state->start);
+  _state_write_gif(state);
 
   for (int i = 0; i < NUM_COLORS; i++) {
     cudaFree(state->all_colors[i]->cur);
     cudaFree(state->all_colors[i]->prev);
-    free(state->all_colors[i]);
   }
 
   for (int i = 0; i < NUM_VELOCITY_COMPONENTS; i++) {
     cudaFree(state->all_velocities[i]->cur);
     cudaFree(state->all_velocities[i]->prev);
-    free(state->all_velocities[i]);
   }
 
-  free(state);
+  _state_destroy(state);
 }
 
 void state_push(state_t *state) {

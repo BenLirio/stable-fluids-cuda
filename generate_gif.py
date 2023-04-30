@@ -5,7 +5,8 @@ from subprocess import run, Popen, PIPE
 import sys
 from tempfile import TemporaryDirectory
 from pathlib import Path
-from sfc import config_to_string, get_config, build, OUTPUT_GIF
+from sfc import get_config, build, OUTPUT_GIF
+import sfc
 from uuid import uuid4
 
 VIZ_PATH = '/usr/bin/viz'
@@ -20,7 +21,7 @@ def generate_gif(config):
     ], stdout=PIPE, stderr=sys.stderr)
 
     Path('gifs').mkdir(parents=True, exist_ok=True)
-    with open(f'gifs/{config_to_string(config)}.gif', 'w') as gif_file:
+    with open(f'gifs/{sfc.string_of_config(config)}.gif', 'w') as gif_file:
       viz_process = Popen([
         'python',
         VIZ_PATH,

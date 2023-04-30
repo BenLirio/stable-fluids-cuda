@@ -1,5 +1,4 @@
 #include <gold/index.h>
-
 #include <util/macros.h>
 #include <util/state.h>
 #include <util/idx2.cuh>
@@ -9,18 +8,7 @@
 #include <omp.h>
 #include <stdlib.h>
 #include <util/log.cuh>
-
-void output_gif_frame(float *colors, int i) {
-  if (i != 0)
-    printf(",");
-  for (int y = 0; y < HEIGHT; y++) {
-    for (int x = 0; x < WIDTH; x++) {
-      printf("%f", colors[y*WIDTH+x]);
-      if (y != HEIGHT - 1 || x != WIDTH - 1)
-        printf(",");
-    }
-  }
-}
+#include <util/gif.cuh>
 
 int main() {
   int log_id;
@@ -45,10 +33,10 @@ int main() {
     state_pop(state);
     log(state, log_id, STEP_TAG);
 
-    if (OUTPUT&OUTPUT_GIF) {
+    if (OUTPUT&OUTPUT_GIF && !USE_GOLD) {
       CUDA_CHECK(cudaMemcpy(colors, state->all_colors[0]->cur, N*sizeof(float), cudaMemcpyDeviceToHost));
-      output_gif_frame(colors, state->step);
     }
+    gif_write_frame(state); 
   }
 
   if (USE_GOLD) {
